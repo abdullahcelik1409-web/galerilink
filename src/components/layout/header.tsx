@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
-import { ShieldAlert, ShieldCheck, LogOut, Menu, X, Car, LayoutDashboard, Settings, PlusCircle } from "lucide-react"
+import { ShieldAlert, ShieldCheck, LogOut, Menu, X, Car, LayoutDashboard, Settings, PlusCircle, Flame, Banknote } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function Header({ profile }: { profile: any }) {
@@ -88,6 +88,14 @@ export function Header({ profile }: { profile: any }) {
                     <Link href="/dashboard/my-cars" onClick={() => setIsMobileMenuOpen(false)} className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all", pathname === '/dashboard/my-cars' ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50")}>
                       <Car className="h-4 w-4" />
                       Benim İlanlarım
+                    </Link>
+                    <Link href="/dashboard/offers" onClick={() => setIsMobileMenuOpen(false)} className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all", pathname === '/dashboard/offers' ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50")}>
+                      <Banknote className="h-4 w-4" />
+                      Teklifler
+                    </Link>
+                    <Link href="/dashboard/opportunities" onClick={() => setIsMobileMenuOpen(false)} className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all", pathname === '/dashboard/opportunities' ? "bg-amber-500/10 text-amber-600 border border-amber-500/20" : "text-muted-foreground hover:text-amber-600 hover:bg-amber-500/5")}>
+                      <Flame className="h-4 w-4" />
+                      Fırsat Havuzu
                     </Link>
                     <Link href="/dashboard/add-car" onClick={() => setIsMobileMenuOpen(false)} className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all", pathname === '/dashboard/add-car' ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-primary hover:bg-primary/5")}>
                       <PlusCircle className="h-4 w-4" />

@@ -1,6 +1,7 @@
 import { CustomerModeProvider } from "@/components/providers/customer-mode-provider"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
+import { OfferNotification } from "@/components/cars/offer-notification"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
@@ -43,6 +44,7 @@ export default async function DashboardLayout({
             {children}
           </main>
         </div>
+        <OfferNotification userId={user.id} />
       </div>
     </CustomerModeProvider>
   )

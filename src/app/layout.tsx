@@ -32,7 +32,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="tr" suppressHydrationWarning className={`${firaSans.variable} ${firaCode.variable}`}>
+    <html 
+      lang="tr" 
+      suppressHydrationWarning 
+      className={`${firaSans.variable} ${firaCode.variable}`}
+      data-scroll-behavior="smooth"
+    >
       <body className={firaSans.className}>
         <ThemeProvider
           attribute="class"

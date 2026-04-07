@@ -4,14 +4,39 @@ import { useState } from "react"
 import { useCustomerMode } from "@/components/providers/customer-mode-provider"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Phone, Gauge, Store, CheckCircle2, ChevronRight, Zap, Trash2 } from "lucide-react"
+import { MapPin, Phone, Gauge, Store, CheckCircle2, ChevronRight, Zap, Trash2, Share2, Check, Banknote } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { DeleteCarModal } from "./delete-car-modal"
+import { OpportunityBadge } from "./opportunity-badge"
+import { OfferModal } from "./offer-modal"
 
 export function CarCard({ car, showDelete = false }: { car: any; showDelete?: boolean }) {
   const { isCustomerMode } = useCustomerMode()
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [offerOpen, setOfferOpen] = useState(false)
+
+  const isOpportunity = car.is_opportunity && car.opportunity_expires_at
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!car.masked_slug) {
+      alert("Bu araç için gizli link henüz oluşturulmamış veya API'den alınamamış."); 
+      return;
+    }
+    
+    const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/p/${car.masked_slug}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy', err);
+    }
+  }
 
   const formattedPrice = new Intl.NumberFormat('tr-TR', { 
     style: 'currency', 
@@ -24,7 +49,10 @@ export function CarCard({ car, showDelete = false }: { car: any; showDelete?: bo
     : (car.location_city || car.profiles?.city || "Belirsiz")
 
   const cardContent = (
-    <Card className="bento-card overflow-hidden h-full flex flex-col border-none ring-1 ring-border/50 relative">
+    <Card className={cn(
+      "bento-card overflow-hidden h-full flex flex-col border-none ring-1 ring-border/50 relative",
+      isOpportunity && "opportunity-card ring-[#D4AF37]/40"
+    )}>
       {/* Visual Header */}
       <div className="aspect-[4/3] w-full bg-muted relative overflow-hidden shrink-0">
         {car.images && car.images[0] ? (
@@ -39,8 +67,14 @@ export function CarCard({ car, showDelete = false }: { car: any; showDelete?: bo
           </div>
         )}
         
+        {/* Opportunity Badge */}
+        {isOpportunity && <OpportunityBadge expiresAt={car.opportunity_expires_at} />}
+
+        {/* Shimmer Overlay for Opportunity */}
+        {isOpportunity && <div className="absolute inset-0 opportunity-glow opacity-30 pointer-events-none" />}
+
         {/* Glass Year Badge */}
-        <div className="absolute top-3 right-3 bg-white/10 backdrop-blur-xl border border-white/20 px-3 py-1.5 rounded-xl shadow-lg ring-1 ring-black/5">
+        <div className="absolute top-3 right-3 bg-white/20 dark:bg-white/10 backdrop-blur-xl border border-white/30 dark:border-white/20 px-3 py-1.5 rounded-xl shadow-lg ring-1 ring-black/5">
            <span className="font-technical text-sm font-black text-white drop-shadow-md">{car.year}</span>
         </div>
 
@@ -84,12 +118,12 @@ export function CarCard({ car, showDelete = false }: { car: any; showDelete?: bo
       {/* B2B Price & Action Area */}
       <div className="mt-auto">
          {!isCustomerMode ? (
-            <div className="bg-slate-950 p-4 relative overflow-hidden group/price">
+            <div className="bg-slate-50 dark:bg-slate-950 p-4 relative overflow-hidden group/price transition-colors duration-500">
                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/20 blur-[50px] rounded-full -translate-y-1/2 translate-x-1/2" />
                <div className="relative z-10 flex items-center justify-between gap-4">
                   <div className="space-y-0.5">
-                     <span className="text-[8px] font-black text-white/30 uppercase tracking-widest block">B2B Ağ Fiyatı</span>
-                     <p className="font-technical text-lg font-black text-white tracking-tighter leading-none">{formattedPrice}</p>
+                     <span className="text-[8px] font-black text-muted-foreground dark:text-white/30 uppercase tracking-widest block">B2B Ağ Fiyatı</span>
+                     <p className="font-technical text-lg font-black text-foreground dark:text-white tracking-tighter leading-none">{formattedPrice}</p>
                   </div>
                   <button 
                     onClick={(e) => {
@@ -97,7 +131,7 @@ export function CarCard({ car, showDelete = false }: { car: any; showDelete?: bo
                       e.stopPropagation();
                       window.location.href = `tel:${car.profiles?.phone}`;
                     }}
-                    className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white text-white hover:text-primary transition-all flex items-center justify-center shadow-lg border border-white/10"
+                    className="w-10 h-10 rounded-xl bg-primary/10 dark:bg-white/10 hover:bg-primary dark:hover:bg-white text-primary dark:text-white hover:text-white dark:hover:text-primary transition-all flex items-center justify-center shadow-lg border border-primary/10 dark:border-white/10"
                   >
                      <Phone className="w-4 h-4" />
                   </button>
@@ -114,6 +148,17 @@ export function CarCard({ car, showDelete = false }: { car: any; showDelete?: bo
                </div>
             </div>
          )}
+
+          {/* Opportunity Quick Offer Button */}
+          {isOpportunity && !isCustomerMode && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOfferOpen(true); }}
+              className="w-full flex items-center justify-center gap-2 bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] py-3.5 transition-all border-t border-[#D4AF37]/20 font-black text-[10px] uppercase tracking-[0.2em]"
+            >
+               <Banknote className="w-4 h-4" />
+               Hızlı Nakit Teklif Ver
+            </button>
+          )}
 
          {/* Seller Meta (Small) */}
          {!isCustomerMode && car.profiles && (
@@ -139,13 +184,22 @@ export function CarCard({ car, showDelete = false }: { car: any; showDelete?: bo
     <div className="relative h-full group">
       {/* Delete Button - Positioned OUTSIDE the Link to avoid navigation conflict */}
       {showDelete && (
-        <button
-          onClick={() => setDeleteOpen(true)}
-          className="absolute top-3 left-3 z-20 w-9 h-9 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/70 hover:bg-destructive hover:text-white hover:border-destructive/50 transition-all opacity-0 group-hover:opacity-100"
-          title="İlanı Sil"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        <div className="absolute top-3 left-3 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+          <button
+            onClick={() => setDeleteOpen(true)}
+            className="w-9 h-9 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/70 hover:bg-destructive hover:text-white hover:border-destructive/50 transition-all"
+            title="İlanı Sil"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={handleShare}
+            className="w-9 h-9 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/70 hover:bg-primary hover:text-white hover:border-primary/50 transition-all"
+            title="Gizli Linki Kopyala"
+          >
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4" />}
+          </button>
+        </div>
       )}
 
       <Link href={`/dashboard/cars/${car.id}`} className="block h-full">
@@ -161,6 +215,15 @@ export function CarCard({ car, showDelete = false }: { car: any; showDelete?: bo
           onClose={() => setDeleteOpen(false)}
         />
       )}
+
+      {/* Offer Modal */}
+      <OfferModal
+        listingId={car.id}
+        ownerId={car.seller_id}
+        carTitle={car.title || `${car.brand} ${car.model}`}
+        isOpen={offerOpen}
+        onClose={() => setOfferOpen(false)}
+      />
     </div>
   )
 }

@@ -41,7 +41,7 @@
     --secondary: hsl(210 40% 96.1%);
     --secondary-foreground: hsl(222.2 47.4% 11.2%);
     --muted: hsl(210 40% 96.1%);
-    --muted-foreground: hsl(215.4 16.3% 46.9%);
+    --muted-foreground: hsl(215.4 16.3% 35%);
     --accent: hsl(222.2 47.4% 11.2%);
     --accent-foreground: hsl(210 40% 98%);
     --destructive: hsl(0 84.2% 60.2%);
@@ -67,7 +67,7 @@
     --secondary: hsl(217.2 32.6% 17.5%);
     --secondary-foreground: hsl(210 40% 98%);
     --muted: hsl(217.2 32.6% 17.5%);
-    --muted-foreground: hsl(215 20.2% 65.1%);
+    --muted-foreground: hsl(215 20.2% 80%);
     --accent: hsl(217.2 32.6% 17.5%);
     --accent-foreground: hsl(210 40% 98%);
     --destructive: hsl(0 62.8% 30.6%);
@@ -118,5 +118,112 @@
   .cta-button:hover {
     @apply brightness-110 -translate-y-0.5;
     box-shadow: 0 20px 25px -5px rgba(220, 38, 38, 0.4);
+  }
+
+  /* Fırsat Havuzu - Gold Theme & Premium Animations */
+  :root {
+    --gold: #D4AF37;
+    --gold-muted: rgba(212, 175, 55, 0.1);
+    --gold-glow: rgba(212, 175, 55, 0.2);
+  }
+
+  .opportunity-card {
+    @apply relative;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.03), rgba(184, 134, 11, 0.06));
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .opportunity-card:hover {
+    @apply -translate-y-1 scale-[1.01];
+    box-shadow: 0 20px 40px -15px rgba(212, 175, 55, 0.15);
+  }
+
+  .opportunity-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(135deg, #D4AF37, #B8860B, #FFD700, #D4AF37);
+    background-size: 300% 300%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.5;
+    animation: gold-shimmer 4s linear infinite;
+  }
+
+  @keyframes gold-shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .glass-node {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+  }
+
+  .subtle-scanline {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .subtle-scanline::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(212, 175, 55, 0.03) 50%,
+      transparent 50%,
+      transparent
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    opacity: 0.2;
+  }
+
+  .pulse-gold {
+    animation: pulse-gold-effect 2.5s infinite;
+  }
+
+  @keyframes pulse-gold-effect {
+    0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+    70% { box-shadow: 0 0 0 12px rgba(212, 175, 55, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+  }
+
+  @keyframes countdown-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.8; }
+  }
+
+  .countdown-pulse {
+    animation: countdown-pulse 2s ease-in-out infinite;
+  }
+
+  /* Toast notification */
+  @keyframes toast-slide-in {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes toast-slide-out {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+
+  .toast-enter {
+    animation: toast-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .toast-exit {
+    animation: toast-slide-out 0.3s ease-in forwards;
   }
 }

@@ -15,9 +15,11 @@ export default async function CarDetailPage({ params }: { params: { id: string }
     .eq('id', id)
     .single()
 
+  const { data: { user } } = await supabase.auth.getUser()
+
   if (error || !car) {
     notFound()
   }
 
-  return <CarDetailView car={car} />
+  return <CarDetailView car={car} isOwner={user?.id === car.seller_id} />
 }

@@ -5,17 +5,26 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CarImageGallery } from "@/components/cars/car-image-gallery"
-import { MapPin, Calendar, Gauge, Phone, Store, Info, ShieldCheck, ChevronLeft, Activity, Sparkles, CheckCircle2, Zap } from "lucide-react"
+import { MapPin, Calendar, Gauge, Phone, Store, Info, ShieldCheck, ChevronLeft, Activity, Sparkles, CheckCircle2, Zap, Banknote } from "lucide-react"
 import { ExpertiseSelector } from "./expertise-selector"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { ShareActions } from "./share-actions"
+import { OpportunityBadge } from "./opportunity-badge"
+import { OfferModal } from "./offer-modal"
+import { CarOffersList } from "./car-offers-list"
+import { useState } from "react"
 
 interface CarDetailViewProps {
   car: any
+  isOwner?: boolean
 }
 
-export function CarDetailView({ car }: CarDetailViewProps) {
+export function CarDetailView({ car, isOwner }: CarDetailViewProps) {
   const { isCustomerMode } = useCustomerMode()
+  const [offerOpen, setOfferOpen] = useState(false)
+
+  const isOpportunity = car.is_opportunity && car.opportunity_expires_at
 
   const formattedPrice = new Intl.NumberFormat('tr-TR', { 
     style: 'currency', 
@@ -25,12 +34,12 @@ export function CarDetailView({ car }: CarDetailViewProps) {
 
   const PricingSection = () => (
     !isCustomerMode ? (
-      <div className="bento-card p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] bg-slate-950 text-white border-none shadow-2xl relative overflow-hidden group">
+      <div className="bento-card p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] bg-slate-50 dark:bg-slate-950 text-foreground dark:text-white border-none shadow-2xl relative overflow-hidden group transition-all duration-500">
          <div className="absolute top-0 right-0 w-48 h-48 bg-primary/20 blur-[80px] rounded-full -translate-y-1/2 translate-x-1/2" />
          <div className="relative z-10 space-y-6 md:space-y-8">
             <div>
-              <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] block mb-2">Ağ İçi B2B Fiyatı</span>
-              <p className="font-technical text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tighter leading-none">{formattedPrice}</p>
+              <span className="text-[10px] font-black text-muted-foreground dark:text-white/40 uppercase tracking-[0.3em] block mb-2">Ağ İçi B2B Fiyatı</span>
+              <p className="font-technical text-4xl sm:text-5xl md:text-6xl font-black text-foreground dark:text-white tracking-tighter leading-none">{formattedPrice}</p>
               
               {/* Trust Badges */}
               <div className="flex flex-wrap gap-2 mt-4 md:mt-6">
@@ -52,7 +61,18 @@ export function CarDetailView({ car }: CarDetailViewProps) {
                     Hemen Ara
                   </a>
                </Button>
-               <p className="text-[10px] text-center font-bold text-white/30 uppercase tracking-widest leading-relaxed">Telefonla doğrudan galeriye bağlanın.</p>
+               <p className="text-[10px] text-center font-bold text-muted-foreground dark:text-white/30 uppercase tracking-widest leading-relaxed">Telefonla doğrudan galeriye bağlanın.</p>
+
+               {/* Opportunity Offer Button */}
+               {isOpportunity && !isOwner && (
+                 <button
+                   onClick={() => setOfferOpen(true)}
+                   className="w-full h-12 md:h-14 rounded-2xl bg-[#D4AF37] text-black text-sm md:text-base font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all hover:brightness-110 active:scale-95 mt-2 shadow-[0_10px_30px_-5px_rgba(212,175,55,0.4)]"
+                 >
+                   <Banknote className="w-5 h-5" />
+                   Hızlı Nakit Teklif Ver
+                 </button>
+               )}
             </div>
          </div>
       </div>
@@ -71,6 +91,7 @@ export function CarDetailView({ car }: CarDetailViewProps) {
   )
 
   return (
+    <>
     <div className="max-w-7xl mx-auto space-y-8 pb-24 px-4 sm:px-6 lg:px-0">
       {/* Navigation & Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -83,6 +104,7 @@ export function CarDetailView({ car }: CarDetailViewProps) {
         <div className="flex items-center gap-2">
             <Badge className="bg-primary/5 text-primary border-primary/10 font-bold uppercase tracking-widest text-[10px]">İlan No: #{car.id.slice(0, 8)}</Badge>
             <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-bold uppercase tracking-widest text-[10px]">Aktif İlan</Badge>
+            {isOwner && <ShareActions maskedSlug={car.masked_slug} title={car.title} />}
         </div>
       </div>
 
@@ -90,6 +112,15 @@ export function CarDetailView({ car }: CarDetailViewProps) {
         {/* Left Column: Image Gallery & Core Info */}
         <div className="lg:col-span-8 space-y-8 md:space-y-10">
           <div className="space-y-6">
+            {/* Opportunity Banner */}
+            {isOpportunity && (
+              <OpportunityBadge 
+                expiresAt={car.opportunity_expires_at} 
+                reason={car.opportunity_reason}
+                variant="detail" 
+              />
+            )}
+
             <CarImageGallery images={car.images || []} />
             
             {/* Mobile Pricing - Visible only on LG down */}
@@ -183,6 +214,11 @@ export function CarDetailView({ car }: CarDetailViewProps) {
                   </div>
               </div>
             </div>
+
+            {/* Offers List */}
+            <div className="pt-8 border-t border-border/50">
+               <CarOffersList listingId={car.id} isOwner={isOwner} />
+            </div>
           </div>
         </div>
 
@@ -217,5 +253,15 @@ export function CarDetailView({ car }: CarDetailViewProps) {
         </div>
       </div>
     </div>
+
+    {/* Offer Modal */}
+    <OfferModal
+      listingId={car.id}
+      ownerId={car.seller_id}
+      carTitle={car.title || `${car.brand} ${car.model}`}
+      isOpen={offerOpen}
+      onClose={() => setOfferOpen(false)}
+    />
+    </>
   )
 }

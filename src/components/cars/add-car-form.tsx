@@ -13,9 +13,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createClient } from "@/lib/supabase/client"
 import { formatLocation } from "@/lib/utils"
 import { TURKEY_LOCATIONS } from "@/lib/constants/locations"
-import { UploadCloud, ImagePlus, X, Type, Activity, Gauge, MapPin, Sparkles, CheckCircle2 } from "lucide-react"
+import { UploadCloud, ImagePlus, X, Type, Activity, Gauge, MapPin, Sparkles, CheckCircle2, Flame, Info } from "lucide-react"
 import { ExpertiseSelector } from "./expertise-selector"
 import { cn } from "@/lib/utils"
+import { compressImage } from "@/lib/image-optimization"
+
+interface ImageState {
+  file: File;
+  previewUrl: string;
+  isOptimizing: boolean;
+  isOptimized: boolean;
+  error?: string;
+}
 
 const CITIES = Object.keys(TURKEY_LOCATIONS).sort((a, b) => a.localeCompare(b, "tr"))
 
@@ -30,6 +39,9 @@ const carSchema = z.object({
   location_district: z.string().min(1, "Lütfen ilçe seçiniz."),
   damage_report: z.string().optional(),
   expertise: z.any().optional(),
+  is_opportunity: z.boolean(),
+  opportunity_reason: z.string().optional(),
+  opportunity_expires_at: z.string().optional(),
 })
 
 type CarFormValues = z.infer<typeof carSchema>
@@ -102,15 +114,7 @@ function PreviewSidebar({ control, filesCount, error, loading }: {
           </div>
        </div>
        
-       <div className="bento-card p-6 rounded-[2rem] bg-emerald-500/5 border-emerald-500/10 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-600">
-             <Sparkles className="w-5 h-5" />
-          </div>
-          <div>
-             <p className="text-xs font-black uppercase tracking-tight text-emerald-700">Yapay Zeka Asistanı</p>
-             <p className="text-[10px] font-bold text-emerald-600/80">İlan başlığınız optimize edildi.</p>
-          </div>
-       </div>
+
     </div>
   )
 }
@@ -145,8 +149,7 @@ export function AddCarForm() {
   const [activeChapter, setActiveChapter] = useState('vision')
 
   // Image states
-  const [files, setFiles] = useState<File[]>([])
-  const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const [carImages, setCarImages] = useState<ImageState[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -168,6 +171,9 @@ export function AddCarForm() {
       location_district: "",
       damage_report: "",
       expertise: {},
+      is_opportunity: false,
+      opportunity_reason: "Nakit İhtiyacı",
+      opportunity_expires_at: "48", // Default 48 hours as string duration
     },
   })
 
@@ -178,29 +184,69 @@ export function AddCarForm() {
     [selectedCity]
   )
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files)
-      setFiles(prev => [...prev, ...selectedFiles])
-      const newUrls = selectedFiles.map(file => URL.createObjectURL(file))
-      setPreviewUrls(prev => [...prev, ...newUrls])
+      
+      // First, add all files to state as 'optimizing'
+      const newImages: ImageState[] = selectedFiles.map(file => ({
+        file,
+        previewUrl: URL.createObjectURL(file), // Initial preview with original
+        isOptimizing: true,
+        isOptimized: false,
+      }))
+      
+      const startIndex = carImages.length
+      setCarImages(prev => [...prev, ...newImages])
+
+      // Then, compress each file in background
+      selectedFiles.forEach(async (file, index) => {
+        const result = await compressImage(file)
+        
+        setCarImages(prev => {
+          const updated = [...prev]
+          const currentIndex = startIndex + index
+          if (updated[currentIndex]) {
+            // Revoke the initial temporary preview URL
+            URL.revokeObjectURL(updated[currentIndex].previewUrl)
+            
+            updated[currentIndex] = {
+              file: result.file,
+              previewUrl: result.previewUrl,
+              isOptimizing: false,
+              isOptimized: result.isOptimized,
+              error: result.error,
+            }
+          }
+          return updated
+        })
+      })
     }
-  }, [])
+  }, [carImages.length])
 
   const removeFile = useCallback((index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index))
-    setPreviewUrls(prev => {
-      URL.revokeObjectURL(prev[index])
-      return prev.filter((_, i) => i !== index)
+    setCarImages(prev => {
+      const updated = [...prev]
+      const itemToRemove = updated[index]
+      if (itemToRemove) {
+        URL.revokeObjectURL(itemToRemove.previewUrl)
+      }
+      return updated.filter((_, i) => i !== index)
     })
   }, [])
 
   const uploadToSupabase = async (file: File) => {
     const supabase = createClient()
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}_${file.name.replace(/\.[^/.]+$/, "")}.webp`
     const filePath = `cars/${fileName}`
-    const { error } = await supabase.storage.from('car_images').upload(filePath, file)
+    
+    // Set content type strictly to webp if it's an optimized image
+    const { error } = await supabase.storage.from('car_images').upload(filePath, file, {
+      contentType: 'image/webp',
+      cacheControl: '3600',
+      upsert: false
+    })
+    
     if (error) throw error
     const { data: { publicUrl } } = supabase.storage.from('car_images').getPublicUrl(filePath)
     return publicUrl
@@ -215,8 +261,11 @@ export function AddCarForm() {
       if (!user) throw new Error("Kullanıcı oturumu bulunamadı")
 
       let imageUrls: string[] = []
-      if (files.length > 0) {
-        imageUrls = await Promise.all(files.map(f => uploadToSupabase(f)))
+      if (carImages.length > 0) {
+        // Ensure all images are finished optimizing before upload
+        // In practice, since they start on select, they are likely done by now
+        const readyFiles = carImages.map(img => img.file)
+        imageUrls = await Promise.all(readyFiles.map(f => uploadToSupabase(f)))
       }
 
       const { error: dbError } = await supabase.from('cars').insert({
@@ -232,7 +281,13 @@ export function AddCarForm() {
         location_city: data.location_city,
         location_district: data.location_district,
         images: imageUrls,
-        is_active: true
+        is_active: true,
+        is_opportunity: data.is_opportunity,
+        opportunity_reason: data.is_opportunity ? data.opportunity_reason : null,
+        opportunity_expires_at: data.is_opportunity && data.opportunity_expires_at 
+          ? new Date(Date.now() + parseInt(data.opportunity_expires_at) * 60 * 60 * 1000).toISOString()
+          : null,
+        is_trade_closed: data.is_opportunity ? true : false
       })
 
       if (dbError) throw dbError
@@ -296,13 +351,33 @@ export function AddCarForm() {
             
             <div className="bento-card p-6 rounded-3xl group">
                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {previewUrls.map((url, i) => (
-                    <div key={i} className="relative aspect-[4/3] rounded-2xl overflow-hidden border group/img shadow-sm">
-                      <img src={url} alt="Preview" className="object-cover w-full h-full transition-transform duration-500 group-hover/img:scale-110" />
-                      <button type="button" onClick={() => removeFile(i)} className="absolute top-2 right-2 bg-destructive/90 text-destructive-foreground rounded-full p-1.5 hover:bg-destructive opacity-0 group-hover/img:opacity-100 transition-all">
+                  {carImages.map((img, i) => (
+                    <div key={i} className="relative aspect-[4/3] rounded-2xl overflow-hidden border group/img shadow-sm bg-muted/20">
+                      <img src={img.previewUrl} alt="Preview" className={cn(
+                        "object-cover w-full h-full transition-all duration-500",
+                        img.isOptimizing ? "opacity-40 blur-[2px]" : "group-hover/img:scale-110"
+                      )} />
+                      
+                      {/* Optimization Status Overlay */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        {img.isOptimizing ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                            <span className="text-[8px] font-black uppercase tracking-widest text-primary bg-background/80 px-2 py-0.5 rounded-full">Optimize Ediliyor</span>
+                          </div>
+                        ) : img.isOptimized ? (
+                          <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-emerald-500/90 backdrop-blur-md px-2 py-0.5 rounded-full shadow-lg">
+                            <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                            <span className="text-[7px] font-black text-white uppercase tracking-tighter">HD Optimize</span>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <button type="button" onClick={() => removeFile(i)} className="absolute top-2 right-2 bg-destructive/90 text-destructive-foreground rounded-full p-1.5 hover:bg-destructive opacity-0 group-hover/img:opacity-100 transition-all z-20">
                         <X className="w-3.5 h-3.5" />
                       </button>
-                      <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[8px] font-bold text-white uppercase">Kapak {i + 1}</div>
+                      
+                      <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[8px] font-bold text-white uppercase z-10">Kapak {i + 1}</div>
                     </div>
                   ))}
                   <button 
@@ -437,14 +512,103 @@ export function AddCarForm() {
                <h2 className="text-xl font-black uppercase tracking-tight">4. Değer • <span className="text-muted-foreground text-sm font-bold">Fiyat ve Ekspertiz</span></h2>
             </div>
 
-            <div className="bento-card p-8 rounded-[2.5rem] bg-slate-950 text-white border-none shadow-2xl relative overflow-hidden group">
+            {/* Opportunity Pool Toggle Section */}
+            <div className="bento-card p-6 rounded-[2.5rem] border-emerald-500/20 bg-emerald-500/5 space-y-6 relative overflow-hidden group/opt">
+               <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                     <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)] group-hover/opt:scale-110 transition-transform">
+                        <Flame className="w-6 h-6" strokeWidth={2.5} />
+                     </div>
+                     <div>
+                        <h3 className="text-base font-black uppercase tracking-tight text-foreground dark:text-white">Fırsat Havuzuna Ekle</h3>
+                        <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest leading-relaxed">İlanınız vitrinin en üstünde ve özel premium kategorisinde görünür.</p>
+                     </div>
+                  </div>
+                  <Controller
+                    name="is_opportunity"
+                    control={control}
+                    render={({ field }) => (
+                      <button
+                        type="button"
+                        onClick={() => field.onChange(!field.value)}
+                        className={cn(
+                          "relative inline-flex h-9 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-emerald-500/10",
+                          field.value ? "bg-emerald-500" : "bg-muted shadow-inner"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "pointer-events-none inline-block h-8 w-8 transform rounded-full bg-white shadow-xl ring-0 transition-transform duration-300 ease-in-out",
+                            field.value ? "translate-x-7" : "translate-x-0"
+                          )}
+                        />
+                      </button>
+                    )}
+                  />
+               </div>
+
+               <Controller
+                 name="is_opportunity"
+                 control={control}
+                 render={({ field: { value: isOpt } }) => isOpt ? (
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-4 duration-500 relative z-10">
+                      <div className="space-y-2">
+                         <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 ml-1">Fırsat Nedeni</Label>
+                         <Controller
+                           name="opportunity_reason"
+                           control={control}
+                           render={({ field }) => (
+                             <Select value={field.value} onValueChange={field.onChange}>
+                               <SelectTrigger className="h-12 bg-primary/5 dark:bg-white/5 border-emerald-500/20 font-black uppercase text-[11px] text-foreground dark:text-white hover:bg-primary/10 dark:hover:bg-white/10 transition-colors rounded-xl">
+                                 <SelectValue placeholder="Neden belirtin" />
+                               </SelectTrigger>
+                               <SelectContent className="bg-card dark:bg-slate-900 border-emerald-500/20 text-foreground dark:text-white">
+                                 <SelectItem value="Nakit İhtiyacı" className="focus:bg-emerald-500/20 focus:text-foreground dark:focus:text-white font-bold">Nakit İhtiyacı</SelectItem>
+                                 <SelectItem value="Stok Yenileme" className="focus:bg-emerald-500/20 focus:text-foreground dark:focus:text-white font-bold">Stok Yenileme</SelectItem>
+                                 <SelectItem value="Dükkan Değişikliği" className="focus:bg-emerald-500/20 focus:text-foreground dark:focus:text-white font-bold">Dükkan Değişikliği</SelectItem>
+                                 <SelectItem value="Diğer" className="focus:bg-emerald-500/20 focus:text-foreground dark:focus:text-white font-bold">Diğer</SelectItem>
+                               </SelectContent>
+                             </Select>
+                           )}
+                         />
+                      </div>
+                      <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 ml-1">Fırsat Süresi</Label>
+                          <Controller
+                            name="opportunity_expires_at"
+                            control={control}
+                            render={({ field }) => (
+                              <Select value={field.value} onValueChange={field.onChange}>
+                                <SelectTrigger className="h-12 bg-primary/5 dark:bg-white/5 border-emerald-500/20 font-technical font-black text-foreground dark:text-white rounded-xl focus:ring-0">
+                                  <SelectValue placeholder="Süre seçin" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-card dark:bg-slate-900 border-emerald-500/20 text-foreground dark:text-white">
+                                  <SelectItem value="24" className="focus:bg-emerald-500/20 font-bold">24 Saat</SelectItem>
+                                  <SelectItem value="48" className="focus:bg-emerald-500/20 font-bold">48 Saat</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                       </div>
+                      <div className="md:col-span-2 p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/10 flex items-start gap-3">
+                         <Info className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" strokeWidth={3} />
+                         <p className="text-[10px] font-bold text-foreground/70 dark:text-white/70 uppercase leading-relaxed tracking-wider">
+                            Fırsat ilanlarında <span className="text-emerald-500">takas otomatik olarak kapatılır</span>. Belirlediğiniz süre dolduğunda ilan otomatik olarak normal ilana dönüşür.
+                         </p>
+                      </div>
+                   </div>
+                 ) : <></>}
+               />
+            </div>
+
+            <div className="bento-card p-8 rounded-[2.5rem] bg-slate-50 dark:bg-slate-950 text-foreground dark:text-white border-none shadow-2xl relative overflow-hidden group transition-all duration-500">
                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
                <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12">
                   <div className="space-y-8">
                      <div>
-                        <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-3 block">Ağ İçi Galerici Fiyatı</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground dark:text-white/40 mb-3 block">Ağ İçi Galerici Fiyatı</Label>
                         <div className="flex items-baseline gap-3 overflow-hidden">
-                           <span className="text-2xl md:text-4xl font-light text-white/30 shrink-0">₺</span>
+                           <span className="text-2xl md:text-4xl font-light text-foreground/30 dark:text-white/30 shrink-0">₺</span>
                            <Controller
                               name="price_b2b"
                               control={control}
@@ -463,32 +627,32 @@ export function AddCarForm() {
                                       const raw = e.target.value.replace(/\./g, '').replace(/[^0-9]/g, '')
                                       field.onChange(raw)
                                     }}
-                                    className="font-technical text-3xl md:text-5xl font-black bg-transparent border-none p-0 outline-none text-white placeholder:text-white/5 w-full min-w-0"
+                                    className="font-technical text-3xl md:text-5xl font-black bg-transparent border-none p-0 outline-none text-foreground dark:text-white placeholder:text-foreground/5 dark:placeholder:text-white/5 w-full min-w-0"
                                   />
                                 )
                               }}
                            />
                         </div>
-                        <p className="mt-4 text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
+                        <p className="mt-4 text-[10px] font-bold text-muted-foreground dark:text-white/40 uppercase tracking-widest flex items-center gap-2">
                            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
                            Bu fiyat "Müşteri Modu" aktifken gizlenir.
                         </p>
                      </div>
 
                      <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">Ek Notlar & Tramer Bilgisi</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground dark:text-white/40 block">Ek Notlar & Tramer Bilgisi</Label>
                         <Textarea 
                            {...register("damage_report")}
-                           className="min-h-[160px] bg-white/5 border-white/10 rounded-2xl resize-none text-white/80 text-sm p-4 focus:border-white/30"
+                           className="min-h-[160px] bg-primary/5 dark:bg-white/5 border-primary/10 dark:border-white/10 rounded-2xl resize-none text-foreground/80 dark:text-white/80 text-sm p-4 focus:border-primary/30 dark:focus:border-white/30"
                            placeholder="Lokal boya, değişen detayları, tramer tutarı veya özel notlarınız..."
                         />
                      </div>
                   </div>
 
                   <div className="space-y-6 flex flex-col justify-center">
-                     <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 shadow-inner">
+                     <div className="bg-primary/5 dark:bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-primary/10 dark:border-white/10 shadow-inner">
                         <div className="mb-6 flex items-center justify-between">
-                           <Label className="text-[10px] font-black uppercase tracking-widest text-white/60">Görsel Hasar Kaydı</Label>
+                           <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground dark:text-white/60">Görsel Hasar Kaydı</Label>
                            <Activity className="w-4 h-4 text-emerald-500 animate-pulse" />
                         </div>
                         <Controller
@@ -509,7 +673,7 @@ export function AddCarForm() {
         </div>
 
         {/* Right Action Sidebar (4 cols) - Isolated re-renders */}
-        <PreviewSidebar control={control} filesCount={files.length} error={error} loading={loading} />
+        <PreviewSidebar control={control} filesCount={carImages.length} error={error} loading={loading} />
 
       </form>
     </div>

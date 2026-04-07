@@ -5,6 +5,8 @@ export const metadata = {
   title: "Benim İlanlarım - GaleriLink",
 }
 
+export const dynamic = 'force-dynamic'
+
 export default async function MyCarsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -16,6 +18,7 @@ export default async function MyCarsPage() {
     .from('cars')
     .select(`*, profiles:seller_id (company_name, city, phone)`)
     .eq('seller_id', user.id)
+    .neq('status', 'sold')
     .order('created_at', { ascending: false })
 
   return (
