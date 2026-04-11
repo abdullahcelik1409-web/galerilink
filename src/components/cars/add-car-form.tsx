@@ -54,6 +54,8 @@ const carSchema = z.object({
   is_opportunity: z.boolean(),
   opportunity_reason: z.string().optional(),
   opportunity_expires_at: z.string().optional(),
+  damage_report: z.string().optional(),
+  expertise: z.any().optional(),
 })
 
 type CarFormValues = z.infer<typeof carSchema>

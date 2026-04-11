@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { ChevronRight, Search, Check, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area" // Assuming scroll-area will be added or using raw div
 
 interface TaxonomyItem {
   id: string;
