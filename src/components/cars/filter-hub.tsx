@@ -1,9 +1,28 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Search, X, ChevronRight, SlidersHorizontal, Check, Info, Trash2, Gauge, Calendar, Zap, CreditCard, Fuel, Settings2, Wind } from "lucide-react"
+import { 
+  X, 
+  MapPin, 
+  Zap, 
+  Gauge, 
+  Settings2, 
+  CreditCard, 
+  Trash2, 
+  Check, 
+  SlidersHorizontal 
+} from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useTaxonomyFilters, TaxonomyNode } from "@/hooks/use-taxonomy-filters"
+import { useTaxonomyFilters, type TaxonomyNode } from "@/hooks/use-taxonomy-filters"
+import { 
+  Select, 
+  SelectContent, 
+  SelectGroup, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
+import { TURKEY_LOCATIONS } from "@/lib/constants/locations"
 
 interface FilterHubProps {
   isOpen: boolean;
@@ -11,6 +30,7 @@ interface FilterHubProps {
   onFilterUpdate: (filters: any) => void;
   currentFilters: any;
   resultCount: number;
+  variant?: 'emerald' | 'primary';
 }
 
 const LEVELS = ['kategori', 'marka', 'model', 'seri', 'motor', 'sanziman', 'kasa', 'paket']
@@ -25,9 +45,18 @@ const LEVEL_LABELS: Record<string, string> = {
   paket: 'Donanım Paketi'
 }
 
-export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, resultCount }: FilterHubProps) {
-  const { getNodes, getAllStandalone } = useTaxonomyFilters()
+const CITIES = Object.keys(TURKEY_LOCATIONS).sort((a, b) => a.localeCompare(b, "tr"))
+
+export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, resultCount, variant = 'emerald' }: FilterHubProps) {
+  const { getNodes, getAllStandalone, loading } = useTaxonomyFilters()
   
+  const isEmerald = variant === 'emerald'
+  const accentColor = isEmerald ? 'emerald' : 'primary'
+  const accentClass = isEmerald ? 'text-emerald-400' : 'text-primary'
+  const accentBorderClass = isEmerald ? 'border-emerald-500/20' : 'border-primary/20'
+  const accentBgClass = isEmerald ? 'bg-emerald-500/10' : 'bg-primary/10'
+  const accentGlowClass = isEmerald ? 'shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'shadow-[0_0_20px_rgba(var(--primary),0.1)]'
+
   // Local state for dynamic taxonomy
   const [taxonomyOptions, setTaxonomyOptions] = useState<Record<string, TaxonomyNode[]>>({})
   const [standaloneOptions, setStandaloneOptions] = useState<Record<string, TaxonomyNode[]>>({})
@@ -60,14 +89,16 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
       const { tax_path } = currentFilters
       const lastIndex = tax_path.length - 1
       const lastSelectedId = tax_path[lastIndex]
-      const nextLevel = LEVELS[tax_path.length]
+      const nextLevel = LEVELS[lastIndex + 1]
 
       if (nextLevel && lastSelectedId) {
         const nextNodes = await getNodes(nextLevel, lastSelectedId)
         setTaxonomyOptions(prev => ({ ...prev, [nextLevel]: nextNodes }))
       }
     }
-    updateNextLevels()
+    if (currentFilters.tax_path?.length > 0) {
+      updateNextLevels()
+    }
   }, [currentFilters.tax_path])
 
   const handleTaxSelect = (id: string, levelIndex: number) => {
@@ -86,9 +117,13 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
       maxYear: null,
       gearType: null,
       bodyType: null,
+      city: null,
+      district: null,
       search: ""
     })
   }
+
+  const districts = useMemo(() => currentFilters.city ? TURKEY_LOCATIONS[currentFilters.city] || [] : [], [currentFilters.city])
 
   return (
     <>
@@ -111,14 +146,14 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
         {/* Header */}
         <div className="p-8 border-b border-white/5 bg-slate-950/50 backdrop-blur-xl flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
-             <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
-                <SlidersHorizontal className="w-6 h-6 text-emerald-400" />
+             <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border", accentBgClass, accentBorderClass, accentGlowClass)}>
+                <SlidersHorizontal className={cn("w-6 h-6", accentClass)} />
              </div>
              <div>
                 <h2 className="text-xl font-black uppercase tracking-tight text-white italic">Filtreleme Merkezi</h2>
                 <div className="flex items-center gap-2">
-                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                   <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/60">{resultCount} Eşleşen Araç</span>
+                   <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", isEmerald ? "bg-emerald-400" : "bg-primary")} />
+                   <span className={cn("text-[10px] font-black uppercase tracking-widest opacity-60", accentClass)}>{resultCount} Eşleşen Araç</span>
                 </div>
              </div>
           </div>
@@ -133,10 +168,50 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-8 space-y-12 custom-scrollbar pb-32">
           
-          {/* 1. Hiyerarşik Seçim (8 Katman) */}
+          {/* 1. Lokasyon Filtreleri (New) */}
           <section className="space-y-6">
             <div className="flex items-center gap-3 mb-2">
-               <Zap className="w-4 h-4 text-emerald-400" />
+               <MapPin className={cn("w-4 h-4", accentClass)} />
+               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40">Lokasyon Filtresi</h3>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/20 ml-1">Şehir</label>
+                <Select value={currentFilters.city || ""} onValueChange={(val) => onFilterUpdate({ city: val, district: null })}>
+                  <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white">
+                    <SelectValue placeholder="Şehir Seçin" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest">
+                    <SelectItem value="null">Tümü</SelectItem>
+                    {CITIES.map(c => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/20 ml-1">İlçe</label>
+                <Select disabled={!currentFilters.city} value={currentFilters.district || ""} onValueChange={(val) => onFilterUpdate({ district: val })}>
+                  <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white disabled:opacity-20">
+                    <SelectValue placeholder="İlçe Seçin" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest">
+                    <SelectItem value="null">Tümü</SelectItem>
+                    {districts.map(d => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </section>
+          
+          {/* 2. Hiyerarşik Seçim (8 Katman) */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-3 mb-2">
+               <Zap className={cn("w-4 h-4", accentClass)} />
                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40">Araç Tanımı (Hiyerarşik)</h3>
             </div>
             
@@ -152,38 +227,37 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
                 return (
                   <div key={level} className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-white/20 ml-1">{LEVEL_LABELS[level]}</label>
-                    <div className="relative group">
-                       <select 
-                         value={isSelected || ""}
-                         onChange={(e) => handleTaxSelect(e.target.value, i)}
-                         className={cn(
-                           "w-full h-14 pl-12 pr-10 bg-white/5 border border-white/5 rounded-2xl outline-none appearance-none focus:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/5 transition-all text-xs font-black uppercase tracking-widest cursor-pointer",
-                           isSelected ? "text-white border-emerald-500/20" : "text-white/30"
-                         )}
-                       >
-                         <option value="">{LEVEL_LABELS[level]} Seçin</option>
-                         {options.map(opt => (
-                           <option key={opt.id} value={opt.id}>{opt.name}</option>
-                         ))}
-                       </select>
-                       <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-emerald-400">
-                          {selectedNode?.logo_url ? (
-                            <img src={selectedNode.logo_url} className="w-5 h-5 object-contain" alt="" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4" />
-                          )}
-                       </div>
-                    </div>
+                    <Select value={isSelected || ""} onValueChange={(val) => handleTaxSelect(val, i)}>
+                       <SelectTrigger className={cn(
+                          "h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest",
+                          isSelected ? "text-white border-white/10" : "text-white/30"
+                       )}>
+                          <div className="flex items-center gap-3">
+                             {selectedNode?.logo_url && <img src={selectedNode.logo_url} className="w-5 h-5 object-contain" alt="" />}
+                             <SelectValue placeholder={`${LEVEL_LABELS[level]} Seçin`} />
+                          </div>
+                       </SelectTrigger>
+                       <SelectContent className="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest">
+                          {options.map(opt => (
+                            <SelectItem key={opt.id} value={opt.id}>
+                               <div className="flex items-center gap-3">
+                                  {opt.logo_url && <img src={opt.logo_url} className="w-4 h-4 object-contain" alt="" />}
+                                  {opt.name}
+                               </div>
+                            </SelectItem>
+                          ))}
+                       </SelectContent>
+                    </Select>
                   </div>
                 )
               })}
             </div>
           </section>
 
-          {/* 2. Teknik Özellikler (Bağımsız) */}
+          {/* 3. Teknik Özellikler (Bağımsız) */}
           <section className="space-y-6">
             <div className="flex items-center gap-3 mb-2">
-               <Settings2 className="w-4 h-4 text-emerald-400" />
+               <Settings2 className={cn("w-4 h-4", accentClass)} />
                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40">Teknik Özellikler</h3>
             </div>
 
@@ -193,13 +267,13 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
                   <label className="text-[10px] font-bold uppercase tracking-widest text-white/20 ml-1">Kilometre Aralığı</label>
                   <div className="flex gap-2">
                      <div className="relative flex-1 group">
-                        <Gauge className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-emerald-400" />
+                        <Gauge className={cn("absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:", accentClass)} />
                         <input 
                           type="text" 
                           placeholder="Min"
                           value={currentFilters.minKm || ""}
                           onChange={(e) => onFilterUpdate({ minKm: e.target.value.replace(/\D/g, "") })}
-                          className="w-full h-14 bg-white/5 border border-white/5 rounded-2xl pl-12 pr-4 outline-none focus:border-emerald-500/40 text-[11px] font-black text-white font-technical"
+                          className="w-full h-14 bg-white/5 border border-white/5 rounded-2xl pl-12 pr-4 outline-none focus:border-white/20 text-[11px] font-black text-white font-technical"
                         />
                      </div>
                      <div className="relative flex-1 group">
@@ -208,7 +282,7 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
                           placeholder="Max"
                           value={currentFilters.maxKm || ""}
                           onChange={(e) => onFilterUpdate({ maxKm: e.target.value.replace(/\D/g, "") })}
-                          className="w-full h-14 bg-white/5 border border-white/5 rounded-2xl px-4 outline-none focus:border-emerald-500/40 text-[11px] font-black text-white font-technical"
+                          className="w-full h-14 bg-white/5 border border-white/5 rounded-2xl px-4 outline-none focus:border-white/20 text-[11px] font-black text-white font-technical"
                         />
                      </div>
                   </div>
@@ -217,39 +291,41 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
                {/* Gear type (Independent) */}
                <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-white/20 ml-1">Şanzıman</label>
-                  <select 
-                    value={currentFilters.gearType || ""}
-                    onChange={(e) => onFilterUpdate({ gearType: e.target.value })}
-                    className="w-full h-14 px-4 bg-white/5 border border-white/5 rounded-2xl outline-none appearance-none focus:border-emerald-500/40 text-xs font-black uppercase tracking-widest text-white"
-                  >
-                    <option value="">Tümü</option>
-                    {standaloneOptions.sanziman?.map(opt => (
-                      <option key={opt.id} value={opt.name}>{opt.name}</option>
-                    ))}
-                  </select>
+                  <Select value={currentFilters.gearType || ""} onValueChange={(val) => onFilterUpdate({ gearType: val === 'null' ? null : val })}>
+                    <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white">
+                      <SelectValue placeholder="Tümü" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest">
+                      <SelectItem value="null">Tümü</SelectItem>
+                      {standaloneOptions.sanziman?.map(opt => (
+                        <SelectItem key={opt.id} value={opt.name}>{opt.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                </div>
 
                {/* Body type (Independent) */}
                <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-white/20 ml-1">Kasa Tipi</label>
-                  <select 
-                    value={currentFilters.bodyType || ""}
-                    onChange={(e) => onFilterUpdate({ bodyType: e.target.value })}
-                    className="w-full h-14 px-4 bg-white/5 border border-white/5 rounded-2xl outline-none appearance-none focus:border-emerald-500/40 text-xs font-black uppercase tracking-widest text-white"
-                  >
-                    <option value="">Tümü</option>
-                    {standaloneOptions.kasa?.map(opt => (
-                      <option key={opt.id} value={opt.name}>{opt.name}</option>
-                    ))}
-                  </select>
+                  <Select value={currentFilters.bodyType || ""} onValueChange={(val) => onFilterUpdate({ bodyType: val === 'null' ? null : val })}>
+                    <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white">
+                      <SelectValue placeholder="Tümü" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest">
+                      <SelectItem value="null">Tümü</SelectItem>
+                      {standaloneOptions.kasa?.map(opt => (
+                        <SelectItem key={opt.id} value={opt.name}>{opt.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                </div>
             </div>
           </section>
 
-          {/* 3. Fiyat & Yıl */}
+          {/* 4. Fiyat & Yıl */}
           <section className="space-y-6">
              <div className="flex items-center gap-3 mb-2">
-               <CreditCard className="w-4 h-4 text-emerald-400" />
+               <CreditCard className={cn("w-4 h-4", accentClass)} />
                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40">Fiyat & Zaman</h3>
             </div>
 
@@ -261,7 +337,7 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
                     value={currentFilters.minYear || ""}
                     onChange={(e) => onFilterUpdate({ minYear: e.target.value })}
                     placeholder="2015"
-                    className="w-full h-14 px-4 bg-white/5 border border-white/5 rounded-2xl outline-none focus:border-emerald-500/40 text-xs font-black text-white font-technical"
+                    className="w-full h-14 px-4 bg-white/5 border border-white/5 rounded-2xl outline-none focus:border-white/20 text-xs font-black text-white font-technical"
                   />
                </div>
                <div className="space-y-2">
@@ -271,7 +347,7 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
                     value={currentFilters.maxYear || ""}
                     onChange={(e) => onFilterUpdate({ maxYear: e.target.value })}
                     placeholder="2024"
-                    className="w-full h-14 px-4 bg-white/5 border border-white/5 rounded-2xl outline-none focus:border-emerald-500/40 text-xs font-black text-white font-technical"
+                    className="w-full h-14 px-4 bg-white/5 border border-white/5 rounded-2xl outline-none focus:border-white/20 text-xs font-black text-white font-technical"
                   />
                </div>
             </div>
@@ -290,7 +366,10 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
            </button>
            <button 
              onClick={onClose}
-             className="flex-1 h-16 rounded-2xl bg-emerald-500 text-white shadow-[0_15px_30px_-10px_rgba(16,185,129,0.5)] flex items-center justify-center font-black uppercase tracking-widest gap-3 active:scale-95 transition-all"
+             className={cn(
+               "flex-1 h-16 rounded-2xl text-white flex items-center justify-center font-black uppercase tracking-widest gap-3 active:scale-95 transition-all shadow-2xl",
+               isEmerald ? "bg-emerald-500 shadow-emerald-500/20" : "bg-primary shadow-primary/20"
+             )}
            >
               <Check className="w-5 h-5" />
               Sonuçları Gör

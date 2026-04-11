@@ -22,7 +22,9 @@ export function OpportunityClientPage({ initialCars }: OpportunityClientPageProp
     minYear: null,
     maxYear: null,
     gearType: null,
-    bodyType: null
+    bodyType: null,
+    city: null,
+    district: null
   })
 
   // Full taxonomy cache for path matching
@@ -96,6 +98,14 @@ export function OpportunityClientPage({ initialCars }: OpportunityClientPageProp
         if (!searchable.includes(s)) return false
       }
 
+      // 6. Location Filter (New Global Search)
+      if (filters.city && filters.city !== 'null') {
+        if (car.location_city !== filters.city) return false
+      }
+      if (filters.district && filters.district !== 'null') {
+        if (car.location_district !== filters.district) return false
+      }
+
       return true
     })
 
@@ -126,6 +136,8 @@ export function OpportunityClientPage({ initialCars }: OpportunityClientPageProp
          <OpportunityFilterBar 
            resultCount={filteredCars.length}
            onFilterChange={(newFilters) => setFilters(newFilters)} 
+           currentFilters={filters}
+           onSearch={(val) => setFilters((f: any) => ({ ...f, search: val }))}
          />
       </div>
 
