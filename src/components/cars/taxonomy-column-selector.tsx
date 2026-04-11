@@ -274,14 +274,16 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, initialPath = [
                   </div>
 
                   {/* Mobile Search/Manual Section */}
-                  <div className="pt-4">
-                    <button
-                      onClick={() => onManualMode(activeCol.level, path.slice(0, mobileActiveIndex))}
-                      className="w-full h-16 flex items-center justify-center rounded-2xl border-2 border-dashed border-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-white/30 hover:border-primary/20 hover:text-primary active:scale-95 transition-all bg-white/[0.02]"
-                    >
-                      Aradığım {LEVEL_LABELS[activeCol.level]} Yok
-                    </button>
-                  </div>
+                  {activeCol && (
+                    <div className="pt-4">
+                      <button
+                        onClick={() => onManualMode(activeCol.level, path.slice(0, mobileActiveIndex))}
+                        className="w-full h-16 flex items-center justify-center rounded-2xl border-2 border-dashed border-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-white/30 hover:border-primary/20 hover:text-primary active:scale-95 transition-all bg-white/[0.02]"
+                      >
+                        Aradığım {LEVEL_LABELS[activeCol.level] || activeCol.level} Yok
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
            </div>

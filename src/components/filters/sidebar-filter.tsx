@@ -78,7 +78,7 @@ export function SidebarFilter({ onFilterChange, isOpen, onToggle }: SidebarFilte
         "md:inset-y-0 md:left-0 md:w-80 md:bg-card/80 md:backdrop-blur-3xl md:border-r",
         isOpen ? "md:translate-x-0" : "md:-translate-x-full md:shadow-none",
         // Mobile Styles
-        "inset-x-0 bottom-0 top-[20%] w-full bg-slate-900 border-t border-white/10 rounded-t-[3rem] shadow-2xl md:top-0 md:rounded-none",
+        "inset-x-0 bottom-0 top-[8%] w-full bg-slate-900 border-t border-white/10 rounded-t-[3rem] shadow-2xl md:top-0 md:rounded-none",
         isMobile && (isOpen ? "translate-y-0" : "translate-y-full")
       )}>
         <div className="flex flex-col h-full relative">
@@ -167,10 +167,9 @@ export function SidebarFilter({ onFilterChange, isOpen, onToggle }: SidebarFilte
              <div className="flex flex-col gap-3">
                <Button 
                  onClick={handleApply}
-                 className="w-full h-20 md:h-14 rounded-3xl text-lg font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-2xl shadow-primary/40 group relative overflow-hidden active:scale-95 transition-all"
+                 className="w-full h-20 md:h-14 rounded-3xl text-lg font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-primary-foreground shadow-2xl shadow-primary/40 group relative overflow-hidden active:scale-95 transition-all"
                >
                   <span className="relative z-10">SONUÇLARI GÖR</span>
-                  <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                </Button>
                <Button 
                  onClick={handleClear}
