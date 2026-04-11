@@ -591,6 +591,14 @@ export function AddCarForm() {
                         </div>
                       ) : (
                         <TaxonomyColumnSelector 
+                          onStepChange={() => {
+                            if (window.innerWidth < 768) {
+                              const element = document.getElementById('identity');
+                              if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                              }
+                            }
+                          }}
                           onManualMode={(level, path) => {
                             setIsManualMode(true)
                             setManualLevel(level)

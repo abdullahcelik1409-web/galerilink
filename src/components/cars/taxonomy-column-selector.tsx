@@ -16,6 +16,7 @@ interface TaxonomyItem {
 interface TaxonomyColumnSelectorProps {
   onSelect: (item: TaxonomyItem, path: TaxonomyItem[]) => void;
   onManualMode: (level: string, currentPath: TaxonomyItem[]) => void;
+  onStepChange?: () => void;
   initialPath?: TaxonomyItem[];
 }
 
@@ -34,7 +35,7 @@ const LEVEL_LABELS: Record<string, string> = {
   paket: 'Paket'
 }
 
-export function TaxonomyColumnSelector({ onSelect, onManualMode, initialPath = [] }: TaxonomyColumnSelectorProps) {
+export function TaxonomyColumnSelector({ onSelect, onManualMode, onStepChange, initialPath = [] }: TaxonomyColumnSelectorProps) {
   const [path, setPath] = useState<TaxonomyItem[]>(initialPath)
   const [columns, setColumns] = useState<{ level: string; items: TaxonomyItem[]; loading: boolean }[]>([])
   const [mobileActiveIndex, setMobileActiveIndex] = useState(0)
@@ -63,16 +64,12 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, initialPath = [
     if (mobileScrollRef.current) {
       mobileScrollRef.current.scrollTo(0, 0)
     }
-    // Aggressive window scroll to top on mobile step change
-    const scrollTimeout = setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'instant' })
-      // Some mobile browsers need body/html scroll
-      document.documentElement.scrollTo(0, 0)
-      document.body.scrollTo(0, 0)
-    }, 50)
     
-    return () => clearTimeout(scrollTimeout)
-  }, [mobileActiveIndex])
+    // Trigger external scroll callback if provided
+    if (onStepChange) {
+      onStepChange();
+    }
+  }, [mobileActiveIndex, onStepChange])
 
   async function loadColumn(level: string, parentId: string | null, index: number) {
     const nextLevelIndex = index
