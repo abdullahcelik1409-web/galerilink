@@ -63,6 +63,15 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, initialPath = [
     if (mobileScrollRef.current) {
       mobileScrollRef.current.scrollTo(0, 0)
     }
+    // Aggressive window scroll to top on mobile step change
+    const scrollTimeout = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' })
+      // Some mobile browsers need body/html scroll
+      document.documentElement.scrollTo(0, 0)
+      document.body.scrollTo(0, 0)
+    }, 50)
+    
+    return () => clearTimeout(scrollTimeout)
   }, [mobileActiveIndex])
 
   async function loadColumn(level: string, parentId: string | null, index: number) {
@@ -128,7 +137,6 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, initialPath = [
       setMobileActiveIndex(prev => prev - 1)
       setPath(prev => prev.slice(0, mobileActiveIndex - 1))
       mobileScrollRef.current?.scrollTo(0, 0)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 
@@ -291,7 +299,7 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, initialPath = [
                     <div className="pt-4">
                       <button
                         onClick={() => onManualMode(activeCol.level, path.slice(0, mobileActiveIndex))}
-                        className="w-full h-16 flex items-center justify-center rounded-2xl border-2 border-dashed border-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-white/30 hover:border-primary/20 hover:text-primary active:scale-95 transition-all bg-white/[0.02]"
+                        className="w-full h-16 flex items-center justify-center rounded-2xl border-2 border-dashed border-primary/40 text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:bg-primary/5 active:scale-95 transition-all bg-primary/5 shadow-lg shadow-primary/5"
                       >
                         Aradığım {LEVEL_LABELS[activeCol.level] || activeCol.level} Yok
                       </button>

@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createClient } from "@/lib/supabase/client"
 import { formatLocation } from "@/lib/utils"
 import { TURKEY_LOCATIONS } from "@/lib/constants/locations"
-import { UploadCloud, ImagePlus, X, Type, Activity, Gauge, MapPin, Sparkles, CheckCircle2, Flame, Info } from "lucide-react"
+import { UploadCloud, ImagePlus, X, Type, Activity, Gauge, MapPin, Sparkles, CheckCircle2, Flame, Info, ChevronRight } from "lucide-react"
 import { ExpertiseSelector } from "./expertise-selector"
 import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-optimization"
@@ -511,6 +511,16 @@ export function AddCarForm() {
                             </Button>
                           </div>
                           
+                          <div className="flex flex-wrap gap-2 px-2">
+                             <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest w-full mb-1">Şu ana kadar seçilenler:</div>
+                             {manualPath.map((p, idx) => (
+                               <div key={idx} className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-full border border-primary/10 text-[10px] font-black uppercase tracking-tight">
+                                  {p.name}
+                                  {idx < manualPath.length - 1 && <ChevronRight className="w-3 h-3 opacity-30" />}
+                               </div>
+                             ))}
+                          </div>
+                          
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-2">
                              {(!manualLevel || manualLevel === 'kategori' || manualLevel === 'marka') && (
                                <div className="space-y-2">
@@ -526,7 +536,7 @@ export function AddCarForm() {
                              )}
                              <div className="space-y-2">
                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Seri / Jenerasyon</Label>
-                               <Input {...register("manual_data.seri")} placeholder="Örn: Sedan" className="h-12 bg-muted/30 border-primary/5 rounded-xl font-bold focus:border-primary/30" />
+                               <Input {...register("manual_data.seri")} placeholder="Örn: 3 Serisi, F30, G20" className="h-12 bg-muted/30 border-primary/5 rounded-xl font-bold focus:border-primary/30" />
                              </div>
                              <div className="space-y-2">
                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Motor</Label>
@@ -587,8 +597,20 @@ export function AddCarForm() {
                             setManualPath(path)
                             const brand = path.find(p => p.level === 'marka')?.name
                             const model = path.find(p => p.level === 'model')?.name
-                            if (brand) setValue('brand', brand)
-                            if (model) setValue('model', model)
+                            const kategori = path.find(p => p.level === 'kategori')
+                            
+                            if (brand) {
+                              setValue('brand', brand)
+                              setValue('manual_data.marka', brand)
+                            }
+                            if (model) {
+                              setValue('model', model)
+                              setValue('manual_data.model', model)
+                            }
+                            if (kategori) {
+                              setValue('manual_data.kategori_id', kategori.id)
+                              setValue('manual_data.kategori_name', kategori.name)
+                            }
                           }}
                           onSelect={(item, path) => {
                             field.onChange(item.id)
