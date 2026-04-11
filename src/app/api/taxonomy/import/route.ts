@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     for (const item of (hierarchy as any[])) {
       const slug = toSlug(item.name);
       
-      const taxonomyResult = await supabaseAdmin
+      const taxonomyResult: any = await (supabaseAdmin as any)
         .from('car_taxonomy')
         .upsert({
           name: item.name,
