@@ -169,7 +169,7 @@ export function CarDetailView({ car, isOwner }: CarDetailViewProps) {
                   </div>
                   <div>
                     <span className="text-[9px] md:text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-1">Konum</span>
-                    <span className="text-sm md:text-base font-extrabold text-primary uppercase tracking-tight truncate block">{car.location_city}</span>
+                    <span className="text-sm md:text-base font-extrabold text-primary uppercase tracking-tight truncate block">{isCustomerMode ? "Gizli" : car.location_city}</span>
                   </div>
                </div>
 
@@ -227,7 +227,7 @@ export function CarDetailView({ car, isOwner }: CarDetailViewProps) {
           <PricingSection />
 
           {/* SELER CARD */}
-          {!isCustomerMode && car.profiles && (
+          {car.profiles && (
              <div className="bento-card p-8 rounded-[2.5rem] bg-muted/30 border-none space-y-6">
                 <div className="flex items-center gap-4">
                    <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center border border-primary/5 shadow-sm overflow-hidden">
@@ -235,10 +235,12 @@ export function CarDetailView({ car, isOwner }: CarDetailViewProps) {
                    </div>
                    <div className="flex flex-col flex-1 min-w-0">
                       <h3 className="font-black text-xl truncate tracking-tight text-primary">{car.profiles.company_name}</h3>
-                      <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-black uppercase tracking-widest">
-                         <MapPin className="w-3 h-3" />
-                         <span className="truncate">{car.profiles.district}, {car.profiles.city}</span>
-                      </div>
+                      {!isCustomerMode && (
+                         <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-black uppercase tracking-widest">
+                            <MapPin className="w-3 h-3" />
+                            <span className="truncate">{car.profiles.district}, {car.profiles.city}</span>
+                         </div>
+                      )}
                    </div>
                 </div>
 
@@ -260,7 +262,10 @@ export function CarDetailView({ car, isOwner }: CarDetailViewProps) {
       ownerId={car.seller_id}
       carTitle={car.title || `${car.brand} ${car.model}`}
       isOpen={offerOpen}
-      onClose={() => setOfferOpen(false)}
+      onClose={() => {
+        setOfferOpen(false)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }}
     />
     </>
   )

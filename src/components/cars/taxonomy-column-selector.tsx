@@ -127,6 +127,8 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, initialPath = [
       setDirection('backward')
       setMobileActiveIndex(prev => prev - 1)
       setPath(prev => prev.slice(0, mobileActiveIndex - 1))
+      mobileScrollRef.current?.scrollTo(0, 0)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 

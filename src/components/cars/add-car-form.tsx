@@ -116,7 +116,7 @@ function PreviewSidebar({ control, filesCount, error, loading }: {
              ) : (
                <>
                  <CheckCircle2 className="w-5 h-5" />
-                 İlanı Ağda Yayınla
+                 İlanı Yayınla
                </>
              )}
           </Button>

@@ -104,14 +104,16 @@ export function CarCard({ car, showDelete = false }: { car: any; showDelete?: bo
                  {car.km?.toLocaleString('tr-TR')} <span className="text-[9px] opacity-60">KM</span>
               </span>
            </div>
-           <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary/5 flex items-center justify-center text-primary/60">
-                 <MapPin className="w-3.5 h-3.5" />
-              </div>
-              <span className="text-[10px] font-bold text-primary/70 truncate uppercase tracking-tight" title={locationText}>
-                 {car.location_city}
-              </span>
-           </div>
+           {!isCustomerMode && (
+             <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-primary/5 flex items-center justify-center text-primary/60">
+                   <MapPin className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-[10px] font-bold text-primary/70 truncate uppercase tracking-tight" title={locationText}>
+                   {car.location_city}
+                </span>
+             </div>
+           )}
         </div>
       </div>
 
