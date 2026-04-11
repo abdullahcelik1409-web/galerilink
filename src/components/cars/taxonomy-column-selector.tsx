@@ -174,6 +174,7 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, onStepChange, i
                   const isSelected = path[colIndex]?.id === item.id
                   return (
                     <button
+                      type="button"
                       key={item.id}
                       onClick={() => handleSelect(item, colIndex)}
                       className={cn(
@@ -195,6 +196,7 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, onStepChange, i
                 })}
                 {!col.loading && (
                   <button
+                    type="button"
                     onClick={() => onManualMode(col.level, path.slice(0, colIndex))}
                     className="w-full flex items-center justify-center p-4 mt-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary/40 hover:text-primary hover:bg-primary/5 border border-dashed border-primary/10 transition-all"
                   >
@@ -215,6 +217,7 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, onStepChange, i
               <div className="flex items-center gap-3">
                 {mobileActiveIndex > 0 && (
                   <button 
+                    type="button"
                     onClick={handleGoBack}
                     className="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl text-white active:scale-90 transition-transform"
                   >
@@ -267,6 +270,7 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, onStepChange, i
                   <div className="grid grid-cols-1 gap-2">
                     {activeCol?.items.map((item) => (
                       <button
+                        type="button"
                         key={item.id}
                         onClick={() => handleSelect(item, mobileActiveIndex)}
                         className="w-full flex items-center justify-between p-5 bg-slate-900 border border-white/5 rounded-2xl active:bg-primary/20 active:border-primary/30 transition-all text-left group"
@@ -295,6 +299,7 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, onStepChange, i
                   {activeCol && (
                     <div className="pt-4">
                       <button
+                        type="button"
                         onClick={() => onManualMode(activeCol.level, path.slice(0, mobileActiveIndex))}
                         className="w-full h-16 flex items-center justify-center rounded-2xl border-2 border-dashed border-primary/40 text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:bg-primary/5 active:scale-95 transition-all bg-primary/5 shadow-lg shadow-primary/5"
                       >
