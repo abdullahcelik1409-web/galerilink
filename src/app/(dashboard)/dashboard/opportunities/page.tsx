@@ -12,41 +12,36 @@ export default async function OpportunitiesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: cars, error } = await supabase.rpc('fetch_opportunities')
+  // Expire old ones first (rpc can be called even if it returns void)
+  await supabase.rpc('fn_expire_opportunities')
+
+  // Fetch cars with package_id and seller info
+  const { data: cars, error } = await supabase
+    .from('cars')
+    .select(`
+      *,
+      profiles:seller_id (
+        company_name,
+        city,
+        district,
+        phone
+      ),
+      offers (
+        id
+      )
+    `)
+    .eq('is_active', true)
+    .eq('is_opportunity', true)
+    .or(`opportunity_expires_at.is.null,opportunity_expires_at.gt.${new Date().toISOString()}`)
+    .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('Opportunity RPC Error:', error)
+    console.error('Fetch Opportunities Error:', error)
   }
 
-  // Map flat RPC response (with res_ prefixes) to nested structure expected by CarCard
   const mappedCars = cars?.map((car: any) => ({
-    id: car.res_id,
-    created_at: car.res_created_at,
-    title: car.res_title,
-    brand: car.res_brand,
-    model: car.res_model,
-    year: car.res_year,
-    km: car.res_km,
-    price_b2b: car.res_price_b2b,
-    images: car.res_images,
-    damage_report: car.res_damage_report,
-    expertise: car.res_expertise,
-    location_city: car.res_location_city,
-    location_district: car.res_location_district,
-    is_active: car.res_is_active,
-    seller_id: car.res_seller_id,
-    is_opportunity: car.res_is_opportunity,
-    opportunity_reason: car.res_opportunity_reason,
-    opportunity_expires_at: car.res_opportunity_expires_at,
-    is_trade_closed: car.res_is_trade_closed,
-    masked_slug: car.res_masked_slug,
-    offer_count: car.res_offer_count,
-    profiles: {
-      company_name: car.res_seller_company_name,
-      city: car.res_seller_city,
-      district: car.res_seller_district,
-      phone: car.res_seller_phone
-    }
+    ...car,
+    offer_count: car.offers?.length || 0
   })) || []
 
   return (

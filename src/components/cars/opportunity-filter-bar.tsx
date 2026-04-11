@@ -1,36 +1,38 @@
 "use client"
 
-import { Search, SlidersHorizontal, ArrowUpDown, ChevronDown } from "lucide-react"
+import { Search, SlidersHorizontal, ArrowUpDown, ChevronDown, Sparkles } from "lucide-react"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
+import { FilterHub } from "./filter-hub"
 
 interface OpportunityFilterBarProps {
-  onFilterChange: (filters: {
-    minPrice: number | null
-    maxPrice: number | null
-    sortBy: string
-    search: string
-  }) => void
+  onFilterChange: (filters: any) => void;
+  resultCount: number;
 }
 
-export function OpportunityFilterBar({ onFilterChange }: OpportunityFilterBarProps) {
-  const [minPrice, setMinPrice] = useState<string>("")
-  const [maxPrice, setMaxPrice] = useState<string>("")
-  const [sortBy, setSortBy] = useState<string>("newest")
-  const [search, setSearch] = useState<string>("")
-  const [isExpanded, setIsExpanded] = useState(false)
+export function OpportunityFilterBar({ onFilterChange, resultCount }: OpportunityFilterBarProps) {
+  const [isHubOpen, setIsHubOpen] = useState(false)
+  const [localFilters, setLocalFilters] = useState({
+    search: "",
+    sortBy: "newest",
+    tax_path: [],
+    minKm: null,
+    maxKm: null,
+    minYear: null,
+    maxYear: null,
+    gearType: null,
+    bodyType: null,
+    minPrice: null,
+    maxPrice: null
+  })
 
+  // Sync back to parent
   useEffect(() => {
-    onFilterChange({
-      minPrice: minPrice ? Number(minPrice) : null,
-      maxPrice: maxPrice ? Number(maxPrice) : null,
-      sortBy,
-      search
-    })
-  }, [minPrice, maxPrice, sortBy, search])
+    onFilterChange(localFilters)
+  }, [localFilters])
 
-  const formatPriceInput = (val: string) => {
-    return val.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+  const handleUpdate = (updates: any) => {
+    setLocalFilters(prev => ({ ...prev, ...updates }))
   }
 
   return (
@@ -43,9 +45,9 @@ export function OpportunityFilterBar({ onFilterChange }: OpportunityFilterBarPro
           </div>
           <input 
             type="text"
-            placeholder="Marka veya model ara..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Kalıp, marka veya model ara..."
+            value={localFilters.search}
+            onChange={(e) => handleUpdate({ search: e.target.value })}
             className="w-full h-14 pl-12 pr-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/5 transition-all text-sm font-medium"
           />
         </div>
@@ -56,8 +58,8 @@ export function OpportunityFilterBar({ onFilterChange }: OpportunityFilterBarPro
                 <ArrowUpDown className="w-4 h-4" />
              </div>
              <select 
-               value={sortBy}
-               onChange={(e) => setSortBy(e.target.value)}
+               value={localFilters.sortBy}
+               onChange={(e) => handleUpdate({ sortBy: e.target.value })}
                className="w-full h-14 pl-10 pr-10 bg-white/5 border border-white/10 rounded-2xl outline-none appearance-none focus:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/5 transition-all text-xs font-black uppercase tracking-widest cursor-pointer"
              >
                <option value="newest">En Yeni İlanlar</option>
@@ -71,69 +73,30 @@ export function OpportunityFilterBar({ onFilterChange }: OpportunityFilterBarPro
           </div>
 
           <button 
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={() => setIsHubOpen(true)}
             className={cn(
               "h-14 px-6 rounded-2xl flex items-center gap-3 transition-all font-black text-xs uppercase tracking-widest border",
-              isExpanded 
+              localFilters.tax_path.length > 0 || localFilters.gearType || localFilters.bodyType || localFilters.minPrice || localFilters.maxPrice
                 ? "bg-emerald-500 text-white border-emerald-400 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)]" 
                 : "bg-white/5 text-white border-white/10 hover:bg-white/10"
             )}
           >
             <SlidersHorizontal className="w-4 h-4" />
             <span>Filtrele</span>
+            {localFilters.tax_path.length > 0 && (
+                <span className="w-5 h-5 rounded-full bg-white text-emerald-600 flex items-center justify-center text-[10px] font-black">{localFilters.tax_path.length}</span>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Expanded Price Filters */}
-      {isExpanded && (
-        <div className="bento-card p-6 rounded-[2rem] border-emerald-500/20 bg-emerald-500/5 animate-in slide-in-from-top-4 duration-300">
-           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
-              <div className="space-y-2">
-                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 ml-1">Minimum Fiyat (₺)</label>
-                 <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/50 font-light">₺</span>
-                    <input 
-                      type="text"
-                      value={minPrice ? Number(minPrice).toLocaleString("tr-TR") : ""}
-                      onChange={(e) => setMinPrice(e.target.value.replace(/\D/g, ""))}
-                      placeholder="Başlangıç"
-                      className="w-full h-12 pl-8 pr-4 bg-white/10 border border-emerald-500/20 rounded-xl outline-none focus:border-emerald-500/50 font-technical font-black text-white"
-                    />
-                 </div>
-              </div>
-
-              <div className="space-y-2">
-                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 ml-1">Maximum Fiyat (₺)</label>
-                 <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/50 font-light">₺</span>
-                    <input 
-                      type="text"
-                      value={maxPrice ? Number(maxPrice).toLocaleString("tr-TR") : ""}
-                      onChange={(e) => setMaxPrice(e.target.value.replace(/\D/g, ""))}
-                      placeholder="Bitiş"
-                      className="w-full h-12 pl-8 pr-4 bg-white/10 border border-emerald-500/20 rounded-xl outline-none focus:border-emerald-500/50 font-technical font-black text-white"
-                    />
-                 </div>
-              </div>
-
-              <div className="flex gap-2">
-                 <button 
-                   onClick={() => { setMinPrice(""); setMaxPrice(""); }}
-                   className="flex-1 h-12 rounded-xl border border-white/10 hover:bg-white/5 text-[10px] font-black uppercase tracking-widest transition-colors"
-                 >
-                   Sıfırla
-                 </button>
-                 <button 
-                   onClick={() => setIsExpanded(false)}
-                   className="flex-1 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500/30 transition-colors"
-                 >
-                   Uygula
-                 </button>
-              </div>
-           </div>
-        </div>
-      )}
+      <FilterHub 
+        isOpen={isHubOpen}
+        onClose={() => setIsHubOpen(false)}
+        onFilterUpdate={handleUpdate}
+        currentFilters={localFilters}
+        resultCount={resultCount}
+      />
     </div>
   )
 }

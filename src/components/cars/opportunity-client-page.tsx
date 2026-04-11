@@ -1,45 +1,106 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { CarCard } from "@/components/cars/car-card"
 import { Flame, Info } from "lucide-react"
 import { OpportunityFilterBar } from "./opportunity-filter-bar"
+import { createClient } from "@/lib/supabase/client"
 
 interface OpportunityClientPageProps {
   initialCars: any[]
 }
 
 export function OpportunityClientPage({ initialCars }: OpportunityClientPageProps) {
-  const [filters, setFilters] = useState({
-    minPrice: null as number | null,
-    maxPrice: null as number | null,
+  const [filters, setFilters] = useState<any>({
+    minPrice: null,
+    maxPrice: null,
     sortBy: "newest",
-    search: ""
+    search: "",
+    tax_path: [],
+    minKm: null,
+    maxKm: null,
+    minYear: null,
+    maxYear: null,
+    gearType: null,
+    bodyType: null
   })
+
+  // Full taxonomy cache for path matching
+  const [taxonomyMap, setTaxonomyMap] = useState<Map<string, any>>(new Map())
+  const supabase = createClient()
+
+  useEffect(() => {
+    async function loadTaxonomy() {
+      const { data } = await supabase.from('car_taxonomy').select('id, parent_id, name, level')
+      const map = new Map()
+      data?.forEach(node => map.set(node.id, node))
+      setTaxonomyMap(map)
+    }
+    loadTaxonomy()
+  }, [])
+
+  // Helper to get full ancestry of a package
+  const getPackageAncestry = (packageId: string) => {
+    const path: any[] = []
+    let currentId = packageId
+    while (currentId && taxonomyMap.has(currentId)) {
+      const node = taxonomyMap.get(currentId)
+      path.unshift(node)
+      currentId = node.parent_id
+    }
+    return path
+  }
 
   const filteredCars = useMemo(() => {
     let result = [...initialCars]
 
-    // Price Filter
-    if (filters.minPrice !== null) {
-      result = result.filter(car => car.price_b2b >= (filters.minPrice ?? 0))
-    }
-    if (filters.maxPrice !== null) {
-      result = result.filter(car => car.price_b2b <= (filters.maxPrice ?? Infinity))
-    }
+    // Mapping taxonomy details for independent checks
+    const enrichedResults = result.map(car => {
+        if (!car.package_id) return { ...car, ancestry: [] }
+        return { ...car, ancestry: getPackageAncestry(car.package_id) }
+    })
 
-    // Search Filter
-    if (filters.search) {
-      const s = filters.search.toLowerCase()
-      result = result.filter(car => 
-        car.brand.toLowerCase().includes(s) || 
-        car.model.toLowerCase().includes(s) ||
-        car.title?.toLowerCase().includes(s)
-      )
-    }
+    let filtered = enrichedResults.filter(car => {
+      // 1. Price
+      if (filters.minPrice && car.price_b2b < filters.minPrice) return false
+      if (filters.maxPrice && car.price_b2b > filters.maxPrice) return false
+
+      // 2. KM & Year
+      if (filters.minKm && car.km < filters.minKm) return false
+      if (filters.maxKm && car.km > filters.maxKm) return false
+      if (filters.minYear && car.year < filters.minYear) return false
+      if (filters.maxYear && car.year > filters.maxYear) return false
+
+      // 3. Independent Gear & Body
+      if (filters.gearType) {
+          const hasGear = car.ancestry.some((n: any) => n.level === 'sanziman' && n.name === filters.gearType)
+          if (!hasGear) return false
+      }
+      if (filters.bodyType) {
+          const hasBody = car.ancestry.some((n: any) => n.level === 'kasa' && n.name === filters.bodyType)
+          if (!hasBody) return false
+      }
+
+      // 4. Hierarchical Path
+      if (filters.tax_path.length > 0) {
+          const carPathIds = car.ancestry.map((n: any) => n.id)
+          // Every ID in selected tax_path must be in car's ancestry
+          const match = filters.tax_path.every((id: string) => carPathIds.includes(id))
+          if (!match) return false
+      }
+
+      // 5. Search
+      if (filters.search) {
+        const s = filters.search.toLowerCase()
+        const searchable = `${car.brand} ${car.model} ${car.title} ${car.location_city}`.toLowerCase()
+        if (!searchable.includes(s)) return false
+      }
+
+      return true
+    })
 
     // Sorting
-    result.sort((a, b) => {
+    filtered.sort((a, b) => {
       if (filters.sortBy === "newest") {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       }
@@ -55,15 +116,16 @@ export function OpportunityClientPage({ initialCars }: OpportunityClientPageProp
       return 0
     })
 
-    return result
-  }, [initialCars, filters])
+    return filtered
+  }, [initialCars, filters, taxonomyMap])
 
   return (
     <div className="space-y-8">
       {/* Filters Section */}
       <div className="relative">
          <OpportunityFilterBar 
-           onFilterChange={(newFilters) => setFilters(prev => ({ ...prev, ...newFilters }))} 
+           resultCount={filteredCars.length}
+           onFilterChange={(newFilters) => setFilters(newFilters)} 
          />
       </div>
 
