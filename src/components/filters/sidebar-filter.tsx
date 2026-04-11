@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Search, SlidersHorizontal, X, ChevronDown, CheckCircle2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,14 @@ export function SidebarFilter({ onFilterChange, isOpen, onToggle }: SidebarFilte
   const [priceMax, setPriceMax] = useState("")
   const [yearMin, setYearMin] = useState("")
   const [yearMax, setYearMax] = useState("")
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const handleApply = () => {
     onFilterChange({
@@ -26,6 +34,7 @@ export function SidebarFilter({ onFilterChange, isOpen, onToggle }: SidebarFilte
       price: { min: priceMin, max: priceMax },
       year: { min: yearMin, max: yearMax }
     })
+    if (isMobile) onToggle()
   }
 
   const handleClear = () => {
@@ -39,9 +48,9 @@ export function SidebarFilter({ onFilterChange, isOpen, onToggle }: SidebarFilte
 
   return (
     <>
-      {/* Desktop Sidebar Toggle Pin */}
+      {/* 💻 DESKTOP Sidebar Toggle Pin (HIDDEN ON MOBILE) */}
       <div className={cn(
-        "fixed left-0 top-1/2 -translate-y-1/2 z-40 transition-all duration-500",
+        "fixed left-0 top-1/2 -translate-y-1/2 z-[40] hidden md:block transition-all duration-500",
         isOpen ? "translate-x-80" : "translate-x-0"
       )}>
         <Button 
@@ -54,93 +63,125 @@ export function SidebarFilter({ onFilterChange, isOpen, onToggle }: SidebarFilte
         </Button>
       </div>
 
-      {/* Sidebar Panel */}
+      {/* 🌑 MOBILE Overlay/Backdrop (ONLY ON MOBILE) */}
+      {isMobile && isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] animate-in fade-in duration-300" 
+          onClick={onToggle} 
+        />
+      )}
+
+      {/* 🛡️ SIDEBAR / MOBILE MODAL PANEL */}
       <div className={cn(
-        "fixed inset-y-0 left-0 w-80 bg-card/80 backdrop-blur-3xl border-r z-50 transition-all duration-700 ease-in-out transform",
-        isOpen ? "translate-x-0" : "-translate-x-full shadow-none"
+        "fixed transition-all duration-700 ease-in-out transform z-[110]",
+        // Desktop Styles
+        "md:inset-y-0 md:left-0 md:w-80 md:bg-card/80 md:backdrop-blur-3xl md:border-r",
+        isOpen ? "md:translate-x-0" : "md:-translate-x-full md:shadow-none",
+        // Mobile Styles
+        "inset-x-0 bottom-0 top-[20%] w-full bg-slate-900 border-t border-white/10 rounded-t-[3rem] shadow-2xl md:top-0 md:rounded-none",
+        isMobile && (isOpen ? "translate-y-0" : "translate-y-full")
       )}>
-        <div className="flex flex-col h-full">
-          <div className="p-8 space-y-8 flex-1 overflow-y-auto scrollbar-none">
+        <div className="flex flex-col h-full relative">
+          
+          {/* Mobile Handle Bar */}
+          <div className="md:hidden flex justify-center py-4">
+            <div className="w-12 h-1 bg-white/10 rounded-full" />
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-8 pt-2 md:pt-8 custom-scrollbar space-y-10 pb-32">
             
             {/* Header */}
-            <div className="space-y-2">
-              <h2 className="text-2xl font-black uppercase tracking-tighter">İleri Filtreleme</h2>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Sahibinden Tarzı Akıllı Arama</p>
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-black uppercase tracking-tighter text-white italic">FİLTRELEYİN</h2>
+                <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Kriterlerinizi Belirleyin</p>
+              </div>
+              <button 
+                onClick={onToggle}
+                className="md:hidden w-12 h-12 flex items-center justify-center bg-white/5 rounded-2xl text-white/40 active:bg-red-500/20 active:text-red-500 transition-colors"
+                title="Kapat"
+              >
+                <X className="w-6 h-6" />
+              </button>
             </div>
 
             {/* Keyword Search */}
             <div className="space-y-4">
-               <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Kelime ile Ara</Label>
+               <Label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Kendi Kelimelerinizle Ara</Label>
                <div className="relative group">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-primary transition-colors" />
                   <Input 
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
-                    placeholder="Örn: değişensiz, acil..." 
-                    className="h-14 pl-12 bg-primary/5 border-none rounded-2xl font-bold placeholder:font-medium focus-visible:ring-2 focus-visible:ring-primary/20"
+                    placeholder="Değişensiz, acil, nakit..." 
+                    className="h-16 pl-12 bg-white/5 border-2 border-white/5 rounded-[1.25rem] font-black text-white placeholder:text-white/10 focus-visible:border-primary/50 focus-visible:ring-0 transition-all"
                   />
                </div>
-               <p className="text-[9px] text-muted-foreground font-medium px-1">Bu alan ilan başlığı ve açıklamalarında arama yapar.</p>
             </div>
 
             {/* Price Range */}
             <div className="space-y-4">
-               <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Fiyat Aralığı (₺)</Label>
-               <div className="grid grid-cols-2 gap-3">
-                  <Input 
-                    value={priceMin}
-                    onChange={(e) => setPriceMin(e.target.value)}
-                    placeholder="Min" 
-                    className="h-12 bg-primary/5 border-none rounded-xl font-technical font-bold text-center" 
-                  />
-                  <Input 
-                    value={priceMax}
-                    onChange={(e) => setPriceMax(e.target.value)}
-                    placeholder="Max" 
-                    className="h-12 bg-primary/5 border-none rounded-xl font-technical font-bold text-center" 
-                  />
+               <Label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Fiyat Aralığı (₺)</Label>
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="relative">
+                    <Input 
+                      value={priceMin}
+                      onChange={(e) => setPriceMin(e.target.value)}
+                      placeholder="Minimum" 
+                      className="h-14 bg-white/5 border-2 border-white/5 rounded-2xl font-technical font-black text-center text-white focus-visible:border-primary/50" 
+                    />
+                  </div>
+                  <div className="relative">
+                    <Input 
+                      value={priceMax}
+                      onChange={(e) => setPriceMax(e.target.value)}
+                      placeholder="Maksimum" 
+                      className="h-14 bg-white/5 border-2 border-white/5 rounded-2xl font-technical font-black text-center text-white focus-visible:border-primary/50" 
+                    />
+                  </div>
                </div>
             </div>
 
             {/* Year Range */}
             <div className="space-y-4">
-               <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Model Yılı</Label>
-               <div className="grid grid-cols-2 gap-3">
+               <Label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Model Yılı</Label>
+               <div className="grid grid-cols-2 gap-4">
                   <Input 
                     value={yearMin}
                     onChange={(e) => setYearMin(e.target.value)}
-                    placeholder="Min" 
-                    className="h-12 bg-primary/5 border-none rounded-xl font-technical font-bold text-center" 
+                    placeholder="Eski" 
+                    className="h-14 bg-white/5 border-2 border-white/5 rounded-2xl font-technical font-black text-center text-white focus-visible:border-primary/50" 
                   />
                   <Input 
                     value={yearMax}
                     onChange={(e) => setYearMax(e.target.value)}
-                    placeholder="Max" 
-                    className="h-12 bg-primary/5 border-none rounded-xl font-technical font-bold text-center" 
+                    placeholder="Yeni" 
+                    className="h-14 bg-white/5 border-2 border-white/5 rounded-2xl font-technical font-black text-center text-white focus-visible:border-primary/50" 
                   />
                </div>
             </div>
-
-            {/* More filters can go here (Fuel, Gear, etc.) */}
-
           </div>
 
-          {/* Action Buttons */}
-          <div className="p-6 border-t bg-muted/20 space-y-3">
-             <Button 
-               onClick={handleApply}
-               className="w-full h-14 rounded-2xl text-xs font-black uppercase tracking-widest cta-button"
-             >
-                Sonuçları Göster
-             </Button>
-             <Button 
-               onClick={handleClear}
-               variant="ghost" 
-               className="w-full h-10 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
-             >
-                Filtreleri Temizle
-             </Button>
+          {/* 🏁 ACTION AREA (Stick to bottom on mobile) */}
+          <div className="absolute bottom-0 inset-x-0 p-8 bg-gradient-to-t from-slate-950 via-slate-950 to-transparent pt-12 md:static md:p-6 md:border-t md:bg-muted/20 md:from-transparent">
+             <div className="flex flex-col gap-3">
+               <Button 
+                 onClick={handleApply}
+                 className="w-full h-20 md:h-14 rounded-3xl text-lg font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-2xl shadow-primary/40 group relative overflow-hidden active:scale-95 transition-all"
+               >
+                  <span className="relative z-10">SONUÇLARI GÖR</span>
+                  <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+               </Button>
+               <Button 
+                 onClick={handleClear}
+                 variant="ghost" 
+                 className="w-full h-10 text-[10px] font-black uppercase tracking-widest text-white/20 hover:text-white transition-colors"
+               >
+                  AYARLARI SIFIRLA
+               </Button>
+             </div>
           </div>
+
         </div>
       </div>
     </>

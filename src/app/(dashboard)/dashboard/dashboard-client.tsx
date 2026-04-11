@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { CarCard } from "@/components/cars/car-card"
 import { SidebarFilter } from "@/components/filters/sidebar-filter"
-import { Flame, ArrowRight, Menu, X } from "lucide-react"
+import { Flame, ArrowRight, Menu, X, SlidersHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -54,7 +54,7 @@ export function DashboardClient({ cars, userCity, userDistrict }: DashboardClien
       {/* Main Content Area */}
       <main className={cn(
         "flex-1 transition-all duration-700 ease-in-out px-4 sm:px-6 lg:px-8 py-8",
-        isSidebarOpen ? "pl-[340px]" : "pl-8"
+        isSidebarOpen ? "md:pl-[340px]" : "md:pl-8"
       )}>
         <div className="max-w-7xl mx-auto space-y-10">
           
@@ -67,12 +67,23 @@ export function DashboardClient({ cars, userCity, userDistrict }: DashboardClien
               </p>
             </div>
             
-            {/* Quick stats or layout toggles can go here */}
-            {filteredCars.length !== cars.length && (
-              <div className="bg-primary/10 text-primary px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20 animate-pulse">
-                {filteredCars.length} Sonuç Bulundu
-              </div>
-            )}
+            {/* Mobile Filter Trigger & Quick Stats */}
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsSidebarOpen(true)}
+                className="md:hidden h-12 rounded-2xl border-primary/20 bg-primary/5 text-primary text-[10px] font-black uppercase tracking-widest gap-2"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                Filtrele
+              </Button>
+
+              {filteredCars.length !== cars.length && (
+                <div className="bg-primary/10 text-primary px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20 animate-pulse">
+                  {filteredCars.length} Sonuç
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Opportunity Highlight Section */}
