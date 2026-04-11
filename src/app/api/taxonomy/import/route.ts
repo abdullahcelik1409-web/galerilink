@@ -53,7 +53,7 @@ export async function POST(req: Request) {
         
       if (taxonomyResult.error) {
         // If upsert conflicts (e.g., null parent_id uniqueness issue), just select it
-        const { data: existingData } = await supabaseAdmin
+        const { data: existingData }: any = await (supabaseAdmin as any)
           .from('car_taxonomy')
           .select('id')
           .eq('name', item.name)
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
     if (children && children.length > 0 && targetChildLevel) {
       for (const childName of children) {
         const slug = toSlug(childName);
-        const { error } = await supabaseAdmin
+        const { error }: any = await (supabaseAdmin as any)
           .from('car_taxonomy')
           .upsert({
             name: childName,
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
       for (const [filterType, options] of Object.entries(filters)) {
         for (const optName of (options as string[])) {
           const slug = toSlug(optName);
-          const { error } = await supabaseAdmin
+          const { error }: any = await (supabaseAdmin as any)
             .from('car_taxonomy')
             .upsert({
               name: optName,
