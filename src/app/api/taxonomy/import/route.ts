@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     for (const item of hierarchy) {
       const slug = toSlug(item.name);
       
-      const { data, error } = await supabaseAdmin
+      const result = await supabaseAdmin
         .from('car_taxonomy')
         .upsert({
           name: item.name,
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         .select()
         .single();
         
-      if (error) {
+      if (result.error) {
         // If upsert conflicts (e.g., null parent_id uniqueness issue), just select it
         const { data: existingData } = await supabaseAdmin
           .from('car_taxonomy')
@@ -61,12 +61,12 @@ export async function POST(req: Request) {
           .is('parent_id', parentId)
           .single();
         if (existingData) {
-           parentId = existingData.id;
+           parentId = (existingData as any).id;
         } else {
-           throw error;
+           throw result.error;
         }
-      } else {
-        parentId = data.id;
+      } else if (result.data) {
+        parentId = (result.data as any).id;
       }
     }
 
