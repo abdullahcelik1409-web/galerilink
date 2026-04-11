@@ -172,12 +172,12 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
           <section className="space-y-6">
             <div className="flex items-center gap-3 mb-2">
                <MapPin className={cn("w-4 h-4", accentClass)} />
-               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40">Lokasyon Filtresi</h3>
+               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/70">Lokasyon Filtresi</h3>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/20 ml-1">Şehir</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 ml-1">Şehir</label>
                 <Select value={currentFilters.city || ""} onValueChange={(val) => onFilterUpdate({ city: val, district: null })}>
                   <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white">
                     <SelectValue placeholder="Şehir Seçin" />
@@ -192,7 +192,7 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/20 ml-1">İlçe</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 ml-1">İlçe</label>
                 <Select disabled={!currentFilters.city} value={currentFilters.district || ""} onValueChange={(val) => onFilterUpdate({ district: val })}>
                   <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white disabled:opacity-20">
                     <SelectValue placeholder="İlçe Seçin" />
@@ -212,7 +212,7 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
           <section className="space-y-6">
             <div className="flex items-center gap-3 mb-2">
                <Zap className={cn("w-4 h-4", accentClass)} />
-               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40">Araç Tanımı (Hiyerarşik)</h3>
+               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/70">Araç Tanımı (Hiyerarşik)</h3>
             </div>
             
             <div className="grid grid-cols-1 gap-4">
@@ -226,7 +226,7 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
 
                 return (
                   <div key={level} className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/20 ml-1">{LEVEL_LABELS[level]}</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 ml-1">{LEVEL_LABELS[level]}</label>
                     <Select value={isSelected || ""} onValueChange={(val) => handleTaxSelect(val, i)}>
                        <SelectTrigger className={cn(
                           "h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest",
@@ -258,13 +258,13 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
           <section className="space-y-6">
             <div className="flex items-center gap-3 mb-2">
                <Settings2 className={cn("w-4 h-4", accentClass)} />
-               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40">Teknik Özellikler</h3>
+               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/70">Teknik Özellikler</h3>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                {/* KM Filter */}
                <div className="space-y-2 col-span-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/20 ml-1">Kilometre Aralığı</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 ml-1">Kilometre Aralığı</label>
                   <div className="flex gap-2">
                      <div className="relative flex-1 group">
                         <Gauge className={cn("absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:", accentClass)} />
@@ -290,7 +290,7 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
 
                {/* Gear type (Independent) */}
                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/20 ml-1">Şanzıman</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 ml-1">Şanzıman</label>
                   <Select value={currentFilters.gearType || ""} onValueChange={(val) => onFilterUpdate({ gearType: val === 'null' ? null : val })}>
                     <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white">
                       <SelectValue placeholder="Tümü" />
@@ -306,7 +306,7 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
 
                {/* Body type (Independent) */}
                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/20 ml-1">Kasa Tipi</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 ml-1">Kasa Tipi</label>
                   <Select value={currentFilters.bodyType || ""} onValueChange={(val) => onFilterUpdate({ bodyType: val === 'null' ? null : val })}>
                     <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white">
                       <SelectValue placeholder="Tümü" />
@@ -326,12 +326,12 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
           <section className="space-y-6">
              <div className="flex items-center gap-3 mb-2">
                <CreditCard className={cn("w-4 h-4", accentClass)} />
-               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40">Fiyat & Zaman</h3>
+               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/70">Fiyat & Zaman</h3>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/20 ml-1">Min. Yıl</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 ml-1">Min. Yıl</label>
                   <input 
                     type="number" 
                     value={currentFilters.minYear || ""}
@@ -341,7 +341,7 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
                   />
                </div>
                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/20 ml-1">Max. Yıl</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 ml-1">Max. Yıl</label>
                   <input 
                     type="number" 
                     value={currentFilters.maxYear || ""}
@@ -356,10 +356,10 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
         </div>
 
         {/* Footer Actions */}
-        <div className="p-8 border-t border-white/5 bg-slate-900/50 backdrop-blur-2xl flex items-center justify-between gap-4 shrink-0">
+        <div className="p-8 border-t border-white/10 bg-slate-900 backdrop-blur-2xl flex items-center justify-between gap-4 shrink-0">
            <button 
              onClick={clearFilters}
-             className="h-16 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 transition-all flex items-center gap-2"
+             className="h-16 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-white hover:bg-white/10 transition-all flex items-center gap-2 border border-white/10"
            >
               <Trash2 className="w-4 h-4" />
               Sıfırla
@@ -367,8 +367,10 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
            <button 
              onClick={onClose}
              className={cn(
-               "flex-1 h-16 rounded-2xl text-white flex items-center justify-center font-black uppercase tracking-widest gap-3 active:scale-95 transition-all shadow-2xl",
-               isEmerald ? "bg-emerald-500 shadow-emerald-500/20" : "bg-primary shadow-primary/20"
+               "flex-1 h-16 rounded-2xl flex items-center justify-center font-black text-sm uppercase tracking-widest gap-3 active:scale-95 transition-all shadow-2xl",
+               isEmerald 
+                 ? "bg-emerald-500 text-white shadow-emerald-500/30 hover:bg-emerald-400" 
+                 : "bg-white text-slate-950 shadow-white/10 hover:bg-white/90"
              )}
            >
               <Check className="w-5 h-5" />
