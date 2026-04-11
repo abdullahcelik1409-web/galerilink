@@ -17,6 +17,7 @@ import { UploadCloud, ImagePlus, X, Type, Activity, Gauge, MapPin, Sparkles, Che
 import { ExpertiseSelector } from "./expertise-selector"
 import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-optimization"
+import { TaxonomyColumnSelector } from "./taxonomy-column-selector"
 
 interface ImageState {
   file: File;
@@ -35,10 +36,21 @@ const carSchema = z.object({
   year: z.string().min(4, "Geçerli bir yıl giriniz."),
   km: z.string().min(1, "Kilometre giriniz."),
   price_b2b: z.string().min(1, "Fiyat giriniz."),
-  location_city: z.string().min(1, "Lütfen il seçiniz."),
+  location_city: z.string().min(1, "Lütfen şehir seçiniz."),
   location_district: z.string().min(1, "Lütfen ilçe seçiniz."),
-  damage_report: z.string().optional(),
-  expertise: z.any().optional(),
+  package_id: z.string().optional(), // Optional if manual entry is used
+  // Manual entry fields
+  manual_data: z.object({
+    kategori_id: z.string().optional(),
+    kategori_name: z.string().optional(),
+    marka: z.string().optional(),
+    model: z.string().optional(),
+    seri: z.string().optional(),
+    motor: z.string().optional(),
+    sanziman: z.string().optional(),
+    kasa: z.string().optional(),
+    paket: z.string().optional(),
+  }).optional(),
   is_opportunity: z.boolean(),
   opportunity_reason: z.string().optional(),
   opportunity_expires_at: z.string().optional(),
@@ -147,6 +159,9 @@ export function AddCarForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeChapter, setActiveChapter] = useState('vision')
+  const [isManualMode, setIsManualMode] = useState(false)
+  const [manualLevel, setManualLevel] = useState<string | null>(null)
+  const [manualPath, setManualPath] = useState<any[]>([])
 
   // Image states
   const [carImages, setCarImages] = useState<ImageState[]>([])
@@ -252,27 +267,92 @@ export function AddCarForm() {
     return publicUrl
   }
 
+  const toSlug = (text: string) => {
+    if (!text) return "";
+    return text.toLowerCase()
+      .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+      .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
   const onSubmit = async (data: CarFormValues) => {
     setLoading(true)
     setError(null)
+    
+    // Otomobil Blacklist Kontrolü (Sadece manuel modda veya marka/model isimlerinde)
+    const blacklist = ["doblo", "courier", "caddy", "fiorino", "partner", "berlingo", "combo", "bipper", "nemo", "transit", "ducato", "boxer", "jumper", "vivaro", "master", "trafic", "vito", "transporter", "caravelle"];
+    const checkText = `${data.brand} ${data.model} ${data.manual_data?.marka || ''} ${data.manual_data?.model || ''}`.toLowerCase();
+    
+    if (blacklist.some(item => checkText.includes(item))) {
+      setError("Üzgünüz, şu anda sadece otomobil kategorisinde ilan kabul edilmektedir. Ticari araçlar sistem dışıdır.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Kullanıcı oturumu bulunamadı")
 
+      let finalPackageId = data.package_id;
+
+      // Manuel Taksonomi Oluşturma
+      if (isManualMode && data.manual_data) {
+        console.log("Manuel taksonomi oluşturuluyor...");
+        let currentParentId = manualPath[manualPath.length - 1]?.id || null;
+        
+        // Kategori -> Marka -> Model -> Seri -> Motor -> Şanzıman -> Kasa -> Paket
+        const levelsToFill = ['kategori', 'marka', 'model', 'seri', 'motor', 'sanziman', 'kasa', 'paket'];
+        const startIndex = levelsToFill.indexOf(manualLevel || 'kategori');
+        
+        for (let i = startIndex; i < levelsToFill.length; i++) {
+          const levelName = levelsToFill[i];
+          let entryName = "";
+          
+          if (levelName === 'kategori') entryName = data.manual_data.kategori_name || "Otomobil";
+          else if (levelName === 'marka') entryName = data.manual_data.marka || data.brand || "";
+          else if (levelName === 'model') entryName = data.manual_data.model || data.model || "";
+          else if (levelName === 'seri') entryName = data.manual_data.seri || "";
+          else if (levelName === 'motor') entryName = data.manual_data.motor || "";
+          else if (levelName === 'sanziman') entryName = data.manual_data.sanziman || "";
+          else if (levelName === 'kasa') entryName = data.manual_data.kasa || "";
+          else if (levelName === 'paket') entryName = data.manual_data.paket || "";
+
+          if (!entryName) continue;
+
+          const { data: newNode, error: upsertError } = await supabase
+            .from('car_taxonomy')
+            .upsert({
+              name: entryName,
+              level: levelName,
+              parent_id: currentParentId,
+              slug: toSlug(`${entryName}-${levelName}-${currentParentId ? currentParentId.substring(0,4) : 'root'}`),
+              status: 'pending' // Onay bekliyor
+            }, { onConflict: 'parent_id, name' })
+            .select()
+            .single();
+
+          if (upsertError) throw upsertError;
+          currentParentId = newNode.id;
+          if (levelName === 'paket') finalPackageId = newNode.id;
+        }
+      }
+
+      if (!finalPackageId) throw new Error("Araç detayları (paket) belirlenemedi.");
+
       let imageUrls: string[] = []
       if (carImages.length > 0) {
-        // Ensure all images are finished optimizing before upload
-        // In practice, since they start on select, they are likely done by now
         const readyFiles = carImages.map(img => img.file)
         imageUrls = await Promise.all(readyFiles.map(f => uploadToSupabase(f)))
       }
 
       const { error: dbError } = await supabase.from('cars').insert({
         seller_id: user.id,
-        title: data.title || `${formatLocation(data.brand)} ${formatLocation(data.model)}`,
-        brand: formatLocation(data.brand),
-        model: formatLocation(data.model),
+        title: data.title || `${data.brand} ${data.model}`,
+        brand: data.manual_data?.marka || data.brand,
+        model: data.manual_data?.model || data.model,
         year: parseInt(data.year),
         km: parseInt(data.km),
         damage_report: data.damage_report,
@@ -282,6 +362,7 @@ export function AddCarForm() {
         location_district: data.location_district,
         images: imageUrls,
         is_active: true,
+        package_id: finalPackageId,
         is_opportunity: data.is_opportunity,
         opportunity_reason: data.is_opportunity ? data.opportunity_reason : null,
         opportunity_expires_at: data.is_opportunity && data.opportunity_expires_at 
@@ -403,8 +484,134 @@ export function AddCarForm() {
                <h2 className="text-xl font-black uppercase tracking-tight">2. Kimlik • <span className="text-muted-foreground text-sm font-bold">Model Tanımı</span></h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-               <div className="md:col-span-3 bento-card p-6 rounded-3xl">
+            <div className="space-y-6">
+               <div className="bento-card p-8 rounded-[2.5rem]">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60 mb-4 block">Araç Kategorisi & Marka • <span className="text-muted-foreground uppercase">Hiyerarşik Seçim</span></Label>
+                  <Controller
+                    name="package_id"
+                    control={control}
+                    render={({ field }) => (
+                      isManualMode ? (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                          <div className="flex items-center justify-between bg-primary/5 p-4 rounded-2xl border border-primary/10">
+                            <div className="flex items-center gap-3">
+                              <Info className="w-4 h-4 text-primary" />
+                              <span className="text-[10px] font-black uppercase tracking-widest text-primary">Manuel Detay Girişi</span>
+                            </div>
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => { setIsManualMode(false); setManualLevel(null); setManualPath([]) }}
+                              className="h-8 text-[9px] font-black uppercase tracking-tighter hover:bg-primary/10"
+                            >
+                              Hiyerarşik Seçime Dön
+                            </Button>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-2">
+                             {(!manualLevel || manualLevel === 'kategori' || manualLevel === 'marka') && (
+                               <div className="space-y-2">
+                                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Marka</Label>
+                                 <Input {...register("manual_data.marka")} placeholder="Örn: Audi" className="h-12 bg-muted/30 border-primary/5 rounded-xl font-bold focus:border-primary/30" />
+                               </div>
+                             )}
+                             {(manualLevel === 'kategori' || manualLevel === 'marka' || manualLevel === 'model') && (
+                                <div className="space-y-2">
+                                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Model</Label>
+                                  <Input {...register("manual_data.model")} placeholder="Örn: A3" className="h-12 bg-muted/30 border-primary/5 rounded-xl font-bold focus:border-primary/30" />
+                                </div>
+                             )}
+                             <div className="space-y-2">
+                               <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Seri / Jenerasyon</Label>
+                               <Input {...register("manual_data.seri")} placeholder="Örn: Sedan" className="h-12 bg-muted/30 border-primary/5 rounded-xl font-bold focus:border-primary/30" />
+                             </div>
+                             <div className="space-y-2">
+                               <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Motor</Label>
+                               <Input {...register("manual_data.motor")} placeholder="Örn: 35 TFSI" className="h-12 bg-muted/30 border-primary/5 rounded-xl font-bold focus:border-primary/30" />
+                             </div>
+                             <div className="space-y-2">
+                               <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Şanzıman</Label>
+                               <Controller
+                                 name="manual_data.sanziman"
+                                 control={control}
+                                 render={({ field: sField }) => (
+                                   <Select value={sField.value} onValueChange={sField.onChange}>
+                                     <SelectTrigger className="h-12 bg-muted/30 border-primary/5 rounded-xl font-bold">
+                                       <SelectValue placeholder="Seçin" />
+                                     </SelectTrigger>
+                                     <SelectContent className="rounded-xl border-primary/10">
+                                        <SelectItem value="Otomatik" className="font-bold">Otomatik</SelectItem>
+                                        <SelectItem value="Manuel" className="font-bold">Manuel</SelectItem>
+                                        <SelectItem value="Yarı Otomatik" className="font-bold">Yarı Otomatik</SelectItem>
+                                     </SelectContent>
+                                   </Select>
+                                 )}
+                               />
+                             </div>
+                             <div className="space-y-2">
+                               <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Kasa Tipi</Label>
+                               <Controller
+                                 name="manual_data.kasa"
+                                 control={control}
+                                 render={({ field: kField }) => (
+                                   <Select value={kField.value} onValueChange={kField.onChange}>
+                                     <SelectTrigger className="h-12 bg-muted/30 border-primary/5 rounded-xl font-bold">
+                                       <SelectValue placeholder="Seçin" />
+                                     </SelectTrigger>
+                                     <SelectContent className="rounded-xl border-primary/10">
+                                        <SelectItem value="Sedan" className="font-bold">Sedan</SelectItem>
+                                        <SelectItem value="Hatchback" className="font-bold">Hatchback</SelectItem>
+                                        <SelectItem value="SUV" className="font-bold">SUV</SelectItem>
+                                        <SelectItem value="Coupe" className="font-bold">Coupe</SelectItem>
+                                        <SelectItem value="Cabrio" className="font-bold">Cabrio</SelectItem>
+                                        <SelectItem value="Station Wagon" className="font-bold">Station Wagon</SelectItem>
+                                     </SelectContent>
+                                   </Select>
+                                 )}
+                               />
+                             </div>
+                             <div className="md:col-span-2 space-y-2">
+                               <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Paket İsmi / Donanım</Label>
+                               <Input {...register("manual_data.paket")} placeholder="Örn: Design" className="h-12 bg-muted/30 border-primary/5 rounded-xl font-bold focus:border-primary/30" />
+                             </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <TaxonomyColumnSelector 
+                          onManualMode={(level, path) => {
+                            setIsManualMode(true)
+                            setManualLevel(level)
+                            setManualPath(path)
+                            const brand = path.find(p => p.level === 'marka')?.name
+                            const model = path.find(p => p.level === 'model')?.name
+                            if (brand) setValue('brand', brand)
+                            if (model) setValue('model', model)
+                          }}
+                          onSelect={(item, path) => {
+                            field.onChange(item.id)
+                            const brandItem = path.find(p => p.level === 'marka')
+                            const modelItem = path.find(p => p.level === 'model')
+                            
+                            if (brandItem) setValue('brand', brandItem.name)
+                            if (modelItem) setValue('model', modelItem.name)
+                            
+                            const currentTitle = control._formValues.title
+                            if (!currentTitle || currentTitle === "") {
+                              const technicalPath = path.slice(3).map(p => p.name).join(' ')
+                              if (technicalPath) {
+                                setValue('title', `${brandItem?.name} ${modelItem?.name} ${technicalPath}`)
+                              }
+                            }
+                          }} 
+                        />
+                      )
+                    )}
+                  />
+                  {errors.package_id && <p className="text-[10px] text-destructive font-bold uppercase mt-2">{errors.package_id.message}</p>}
+               </div>
+
+               <div className="bento-card p-6 rounded-3xl">
                   <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 mb-2 block">İlan Başlığı</Label>
                   <Input 
                      {...register("title")}
@@ -415,24 +622,6 @@ export function AddCarForm() {
                      )}
                   />
                   {errors.title && <p className="text-[10px] text-destructive font-bold uppercase mt-1">{errors.title.message}</p>}
-               </div>
-               
-               <div className="bento-card p-6 rounded-3xl">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 block">Marka</Label>
-                  <Input 
-                     {...register("brand")} 
-                     placeholder="Marka" 
-                     className="bg-transparent border-primary/10 focus:border-primary uppercase font-bold" 
-                  />
-               </div>
-
-               <div className="bento-card p-6 rounded-3xl md:col-span-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 block">Model ve Paket</Label>
-                  <Input 
-                     {...register("model")} 
-                     placeholder="Model örn: 3.20i Luxury Line" 
-                     className="bg-transparent border-primary/10 focus:border-primary uppercase font-bold" 
-                  />
                </div>
             </div>
           </section>

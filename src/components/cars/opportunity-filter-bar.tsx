@@ -9,6 +9,7 @@ interface OpportunityFilterBarProps {
     minPrice: number | null
     maxPrice: number | null
     sortBy: string
+    search: string
   }) => void
 }
 
@@ -16,15 +17,17 @@ export function OpportunityFilterBar({ onFilterChange }: OpportunityFilterBarPro
   const [minPrice, setMinPrice] = useState<string>("")
   const [maxPrice, setMaxPrice] = useState<string>("")
   const [sortBy, setSortBy] = useState<string>("newest")
+  const [search, setSearch] = useState<string>("")
   const [isExpanded, setIsExpanded] = useState(false)
 
   useEffect(() => {
     onFilterChange({
       minPrice: minPrice ? Number(minPrice) : null,
       maxPrice: maxPrice ? Number(maxPrice) : null,
-      sortBy
+      sortBy,
+      search
     })
-  }, [minPrice, maxPrice, sortBy])
+  }, [minPrice, maxPrice, sortBy, search])
 
   const formatPriceInput = (val: string) => {
     return val.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".")
@@ -41,6 +44,8 @@ export function OpportunityFilterBar({ onFilterChange }: OpportunityFilterBarPro
           <input 
             type="text"
             placeholder="Marka veya model ara..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full h-14 pl-12 pr-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/5 transition-all text-sm font-medium"
           />
         </div>

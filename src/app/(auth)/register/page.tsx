@@ -6,22 +6,24 @@ export const metadata = {
 
 export default function RegisterPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 py-16 relative overflow-hidden">
-      {/* Background Studio Light */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/10 blur-[150px] rounded-full pointer-events-none" />
-      
-      <div className="w-full max-w-4xl z-10 space-y-12">
+    <div className="flex min-h-screen flex-col items-center bg-slate-950 px-4 py-12 md:py-20">
+      <div className="w-full max-w-4xl space-y-10">
         <div className="text-center space-y-4">
-          <h1 className="text-6xl font-black tracking-tighter text-white uppercase italic">
-            Galeri<span className="text-primary">Link</span>
+          <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white uppercase italic">
+            Galeri<span className="text-primary italic">Link</span>
           </h1>
-          <p className="text-white/40 font-bold uppercase tracking-[0.3em] text-xs px-12">Onaylı Galericiler Ağına Katılın</p>
+          <p className="text-white/40 font-bold uppercase tracking-[0.2em] text-[10px] md:text-xs">Güvenilir B2B Araç Ticaret Platformu</p>
         </div>
-        <RegisterForm />
-      </div>
+        
+        <div className="relative">
+          <RegisterForm />
+        </div>
 
-      <div className="absolute bottom-8 text-white/20 font-technical text-[10px] uppercase tracking-widest">
-        B2B Network Registration v2.1
+        <div className="text-center py-10">
+           <p className="text-white/10 font-technical text-[8px] uppercase tracking-widest">
+             GaleriLink B2B Network System — All rights reserved
+           </p>
+        </div>
       </div>
     </div>
   )

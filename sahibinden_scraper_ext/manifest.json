@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Sahibinden Taxonomy Scraper",
+  "version": "1.1",
+  "description": "Scrapes vehicle taxonomy from Sahibinden and sends to Galeri App",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.sahibinden.com/*",
+    "http://localhost:3000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Taxonomy Scraper"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.sahibinden.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ]
+}

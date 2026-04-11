@@ -84,7 +84,6 @@
   }
   html {
     scroll-behavior: smooth;
-    touch-action: pan-x pan-y;
   }
   body {
     @apply bg-background text-foreground;
@@ -92,7 +91,6 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-ua-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    touch-action: pan-x pan-y;
   }
 
   .font-technical {

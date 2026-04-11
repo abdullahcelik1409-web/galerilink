@@ -19,11 +19,13 @@ export const metadata: Metadata = {
   description: "Galericiler için kapalı devre araç ticaret platformu",
 }
 
+// VIEWPORT: Applied requested maximumScale: 1 and userScalable: false
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  interactiveWidget: "resizes-content",
 }
 
 export default function RootLayout({
