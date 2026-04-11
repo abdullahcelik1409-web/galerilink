@@ -78,17 +78,17 @@ export function SidebarFilter({ onFilterChange, isOpen, onToggle }: SidebarFilte
         "md:inset-y-0 md:left-0 md:w-80 md:bg-card/80 md:backdrop-blur-3xl md:border-r",
         isOpen ? "md:translate-x-0" : "md:-translate-x-full md:shadow-none",
         // Mobile Styles
-        "inset-x-0 bottom-0 top-[8%] w-full bg-slate-900 border-t border-white/10 rounded-t-[3rem] shadow-2xl md:top-0 md:rounded-none",
+        "inset-x-0 bottom-0 top-[8dvh] w-full bg-slate-900 border-t border-white/10 rounded-t-[3rem] shadow-2xl md:top-0 md:rounded-none h-[92dvh] md:h-auto",
         isMobile && (isOpen ? "translate-y-0" : "translate-y-full")
       )}>
         <div className="flex flex-col h-full relative">
           
           {/* Mobile Handle Bar */}
-          <div className="md:hidden flex justify-center py-4">
+          <div className="md:hidden flex justify-center py-4 shrink-0">
             <div className="w-12 h-1 bg-white/10 rounded-full" />
           </div>
 
-          <div className="flex-1 overflow-y-auto p-8 pt-2 md:pt-8 custom-scrollbar space-y-10 pb-32">
+          <div className="flex-1 overflow-y-auto p-8 pt-2 md:pt-8 custom-scrollbar space-y-10 pb-40">
             
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -149,13 +149,13 @@ export function SidebarFilter({ onFilterChange, isOpen, onToggle }: SidebarFilte
                   <Input 
                     value={yearMin}
                     onChange={(e) => setYearMin(e.target.value)}
-                    placeholder="Eski" 
+                    placeholder="En Eski" 
                     className="h-14 bg-white/5 border-2 border-white/5 rounded-2xl font-technical font-black text-center text-white focus-visible:border-primary/50" 
                   />
                   <Input 
                     value={yearMax}
                     onChange={(e) => setYearMax(e.target.value)}
-                    placeholder="Yeni" 
+                    placeholder="En Yeni" 
                     className="h-14 bg-white/5 border-2 border-white/5 rounded-2xl font-technical font-black text-center text-white focus-visible:border-primary/50" 
                   />
                </div>

@@ -40,6 +40,7 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, initialPath = [
   const [mobileActiveIndex, setMobileActiveIndex] = useState(0)
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward')
   const containerRef = useRef<HTMLDivElement>(null)
+  const mobileScrollRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
   // Load initial root level (kategori)
@@ -56,6 +57,13 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, initialPath = [
       })
     }
   }, [columns.length])
+
+  // Reset mobile scroll on level change
+  useEffect(() => {
+    if (mobileScrollRef.current) {
+      mobileScrollRef.current.scrollTo(0, 0)
+    }
+  }, [mobileActiveIndex])
 
   async function loadColumn(level: string, parentId: string | null, index: number) {
     const nextLevelIndex = index
@@ -231,7 +239,10 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, initialPath = [
         </div>
 
         {/* Active Column Content */}
-        <div className="relative overflow-hidden min-h-[350px]">
+        <div 
+          ref={mobileScrollRef}
+          className="relative overflow-hidden min-h-[350px] overflow-y-auto max-h-[70vh] custom-scrollbar"
+        >
            <div 
              key={mobileActiveIndex}
              className={cn(
