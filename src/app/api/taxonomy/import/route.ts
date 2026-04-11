@@ -34,13 +34,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No hierarchy provided" }, { status: 400, headers: corsHeaders });
     }
 
-    let parentId = null;
+    let parentId: string | null = null;
 
     // 1. Process Hierarchy (Brand -> Series -> Model)
-    for (const item of hierarchy) {
+    for (const item of (hierarchy as any[])) {
       const slug = toSlug(item.name);
       
-      const result = await supabaseAdmin
+      const taxonomyResult = await supabaseAdmin
         .from('car_taxonomy')
         .upsert({
           name: item.name,
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         .select()
         .single();
         
-      if (result.error) {
+      if (taxonomyResult.error) {
         // If upsert conflicts (e.g., null parent_id uniqueness issue), just select it
         const { data: existingData } = await supabaseAdmin
           .from('car_taxonomy')
@@ -63,10 +63,10 @@ export async function POST(req: Request) {
         if (existingData) {
            parentId = (existingData as any).id;
         } else {
-           throw result.error;
+           throw taxonomyResult.error;
         }
-      } else if (result.data) {
-        parentId = (result.data as any).id;
+      } else if (taxonomyResult.data) {
+        parentId = (taxonomyResult.data as any).id;
       }
     }
 
