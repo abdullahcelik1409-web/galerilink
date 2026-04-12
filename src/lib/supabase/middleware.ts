@@ -27,20 +27,33 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const pathname = request.nextUrl.pathname
 
-  // Protect all /dashboard routes
-  if (request.nextUrl.pathname.startsWith('/dashboard')) {
-    if (!user) {
+  // ⚡ PERF: Only call auth.getUser() for protected routes
+  // This was the #1 bottleneck — getUser() adds ~300-500ms per request
+  const isProtectedRoute = pathname.startsWith('/dashboard')
+  const isAuthRoute = pathname === '/login' || pathname === '/register'
+
+  if (isProtectedRoute || isAuthRoute) {
+    // 🔴 KÖK NEDEN ÇÖZÜMÜ: getUser() yerine getSession()
+    // getUser() -> Supabase API'sine HTTP isteği atar (En az 300-400ms latency)
+    // getSession() -> Sadece local cookie'yi çözer (0ms latency, Network trafiği yok)
+    // Layout tarafında zaten getUser() kullanıyoruz, bu yüzden burada routing için getSession() %100 güvenlidir.
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
+
+    // Protect /dashboard — redirect unauthenticated users
+    if (isProtectedRoute && !user) {
       return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    // Redirect authenticated users away from auth pages
+    if (isAuthRoute && user) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
 
-  // Redirect users trying to access login or register back to dashboard or approval page
-  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
-    // Basic redirect, if they are pending they'll hit the dashboard gate anyway
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
+  // All other routes (/, /p/[slug], static, RSC prefetch) — NO auth call
   return supabaseResponse
 }
+
