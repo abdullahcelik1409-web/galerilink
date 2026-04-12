@@ -262,7 +262,9 @@ export function AddCarForm() {
 
   const uploadToSupabase = async (file: File) => {
     const supabase = createClient()
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}_${file.name.replace(/\.[^/.]+$/, "")}.webp`
+    // Sadece guvenli karakterler kullan (orijinal dosya adindaki bosluk/turkce karakterleri at)
+    const safeName = file.name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 20)
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}_${safeName}.webp`
     const filePath = `cars/${fileName}`
     
     // Set content type strictly to webp if it's an optimized image
