@@ -32,8 +32,8 @@ const CITIES = Object.keys(TURKEY_LOCATIONS).sort((a, b) => a.localeCompare(b, "
 
 const carSchema = z.object({
   title: z.string().min(5, "Başlık en az 5 karakter olmalıdır."),
-  brand: z.string().min(1, "Marka gereklidir."),
-  model: z.string().min(1, "Model gereklidir."),
+  brand: z.string().optional(),
+  model: z.string().optional(),
   year: z.string().min(4, "Geçerli bir yıl giriniz."),
   km: z.string().min(1, "Kilometre giriniz."),
   price_b2b: z.string().min(1, "Fiyat giriniz."),
@@ -57,6 +57,13 @@ const carSchema = z.object({
   opportunity_expires_at: z.string().optional(),
   damage_report: z.string().optional(),
   expertise: z.any().optional(),
+}).superRefine((data, ctx) => {
+  if (!data.brand && !data.manual_data?.marka) {
+    ctx.addIssue({ path: ["brand"], message: "Marka alanını doldurun veya seçin.", code: z.ZodIssueCode.custom })
+  }
+  if (!data.model && !data.manual_data?.model) {
+    ctx.addIssue({ path: ["model"], message: "Model alanını doldurun veya seçin.", code: z.ZodIssueCode.custom })
+  }
 })
 
 type CarFormValues = z.infer<typeof carSchema>
