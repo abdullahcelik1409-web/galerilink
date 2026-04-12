@@ -43,6 +43,7 @@ export async function getTaxonomyMap(): Promise<Map<string, TaxonomyNode>> {
         const { data, error } = await supabase
           .from('car_taxonomy')
           .select('id, parent_id, name, level, slug, logo_url')
+          .eq('status', 'approved')
           .range(offset, offset + limit - 1)
 
         if (error) {
