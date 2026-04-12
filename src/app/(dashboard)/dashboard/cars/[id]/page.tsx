@@ -9,7 +9,9 @@ export default async function CarDetailPage({ params }: { params: { id: string }
   const { data: car, error } = await supabase
     .from('cars')
     .select(`
-      *,
+      id, seller_id, title, brand, model, year, km, price_b2b, images,
+      location_city, location_district, is_opportunity, opportunity_expires_at,
+      opportunity_reason, damage_report, expertise, masked_slug, is_active, created_at,
       profiles:seller_id (company_name, city, district, phone)
     `)
     .eq('id', id)

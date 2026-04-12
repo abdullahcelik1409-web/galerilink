@@ -57,7 +57,7 @@ export function useTaxonomyFilters() {
       if (error) throw error
       
       // Remove duplicates by name for standalone filters
-      const unique = Array.from(new Map(data.map(item => [item.name, item])).values())
+      const unique = Array.from(new Map(data.map((item: any) => [item.name, item])).values())
       return unique as TaxonomyNode[]
     } catch (err) {
       console.error(`Error fetching standalone taxonomy for ${level}:`, err)

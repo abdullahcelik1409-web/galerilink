@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -31,10 +32,14 @@ export function CarImageGallery({ images }: CarImageGalleryProps) {
     <div className="space-y-4">
       {/* Main Large Image Container */}
       <div className="relative aspect-[16/10] bg-muted rounded-xl overflow-hidden group border shadow-sm">
-        <img 
+        <Image 
           src={images[currentIndex]} 
           alt={`Car image ${currentIndex + 1}`}
+          width={800}
+          height={500}
+          sizes="(max-width: 1024px) 100vw, 66vw"
           className="w-full h-full object-cover transition-opacity duration-300"
+          priority={currentIndex === 0}
         />
         
         {/* Navigation Arrows - Only visible if more than 1 image */}
@@ -77,7 +82,7 @@ export function CarImageGallery({ images }: CarImageGalleryProps) {
                   : "border-transparent hover:border-primary/40"
               )}
             >
-              <img src={url} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+              <Image src={url} alt={`Thumbnail ${index + 1}`} width={96} height={60} className="w-full h-full object-cover" loading="lazy" />
               {currentIndex !== index && <div className="absolute inset-0 bg-black/10 hover:bg-transparent transition-colors" />}
             </button>
           ))}

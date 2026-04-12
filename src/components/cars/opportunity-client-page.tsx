@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react"
 import { CarCard } from "@/components/cars/car-card"
 import { Flame, Info } from "lucide-react"
 import { OpportunityFilterBar } from "./opportunity-filter-bar"
-import { createClient } from "@/lib/supabase/client"
+import { getTaxonomyMap } from "@/lib/taxonomy-cache"
 
 interface OpportunityClientPageProps {
   initialCars: any[]
@@ -27,18 +27,11 @@ export function OpportunityClientPage({ initialCars }: OpportunityClientPageProp
     district: null
   })
 
-  // Full taxonomy cache for path matching
+  // ⚡ Perf: Singleton taxonomy cache — not re-fetched on every navigation
   const [taxonomyMap, setTaxonomyMap] = useState<Map<string, any>>(new Map())
-  const supabase = createClient()
 
   useEffect(() => {
-    async function loadTaxonomy() {
-      const { data } = await supabase.from('car_taxonomy').select('id, parent_id, name, level')
-      const map = new Map()
-      data?.forEach(node => map.set(node.id, node))
-      setTaxonomyMap(map)
-    }
-    loadTaxonomy()
+    getTaxonomyMap().then(setTaxonomyMap)
   }, [])
 
   // Helper to get full ancestry of a package

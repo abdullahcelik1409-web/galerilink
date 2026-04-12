@@ -2,7 +2,7 @@ import { CustomerModeProvider } from "@/components/providers/customer-mode-provi
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { OfferNotification } from "@/components/cars/offer-notification"
-import { createClient } from "@/lib/supabase/server"
+import { getAuthUser, getProfile } from "@/lib/supabase/auth-cache"
 import { redirect } from "next/navigation"
 
 export const metadata = {
@@ -14,14 +14,15 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // ⚡ Perf: Memoized auth — same call in page.tsx won't hit Supabase again
+  const { user } = await getAuthUser()
 
   if (!user) {
     redirect('/login')
   }
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  // ⚡ Perf: Memoized profile — deduplicated across layout + page
+  const { profile } = await getProfile(user.id)
 
   if (profile) {
     if (profile.status === 'pending_approval') {

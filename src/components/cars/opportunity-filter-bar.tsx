@@ -1,7 +1,7 @@
 "use client"
 
 import { Search, SlidersHorizontal, ArrowUpDown, ChevronDown, Sparkles } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { FilterHub } from "./filter-hub"
 
@@ -32,10 +32,15 @@ export function OpportunityFilterBar({ onFilterChange, resultCount, variant = 'e
     district: null
   })
 
-  // Sync back to parent
+  // Sync back to parent — debounced to prevent render loop
+  const prevFiltersRef = useRef(JSON.stringify(localFilters))
   useEffect(() => {
-    onFilterChange(localFilters)
-  }, [localFilters])
+    const serialized = JSON.stringify(localFilters)
+    if (serialized !== prevFiltersRef.current) {
+      prevFiltersRef.current = serialized
+      onFilterChange(localFilters)
+    }
+  }, [localFilters, onFilterChange])
 
   const handleUpdate = (updates: any) => {
     setLocalFilters(prev => ({ ...prev, ...updates }))

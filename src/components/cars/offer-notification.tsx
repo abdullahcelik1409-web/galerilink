@@ -37,7 +37,7 @@ export function OfferNotification({ userId }: { userId: string }) {
           table: 'offers',
           filter: `owner_id=eq.${userId}`,
         },
-        async (payload) => {
+        async (payload: any) => {
           const offer = payload.new as any
 
           // Araç bilgisini çek

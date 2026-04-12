@@ -12,14 +12,15 @@ export default async function OpportunitiesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  // Expire old ones first (rpc can be called even if it returns void)
-  await supabase.rpc('fn_expire_opportunities')
+  // ⚡ Perf: Fire-and-forget expire RPC + parallel cars fetch
+  supabase.rpc('fn_expire_opportunities').then(() => {}) // Don't await void RPC
 
-  // Fetch cars with package_id and seller info
   const { data: cars, error } = await supabase
     .from('cars')
     .select(`
-      *,
+      id, seller_id, title, brand, model, year, km, price_b2b, images,
+      location_city, location_district, is_opportunity, opportunity_expires_at,
+      opportunity_reason, package_id, is_active, created_at, masked_slug,
       profiles:seller_id (
         company_name,
         city,

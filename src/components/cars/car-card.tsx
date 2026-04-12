@@ -1,15 +1,19 @@
 "use client"
 
 import { useState } from "react"
+import dynamic from "next/dynamic"
+import Image from "next/image"
 import { useCustomerMode } from "@/components/providers/customer-mode-provider"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Phone, Gauge, Store, CheckCircle2, ChevronRight, Zap, Trash2, Share2, Check, Banknote } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { DeleteCarModal } from "./delete-car-modal"
 import { OpportunityBadge } from "./opportunity-badge"
-import { OfferModal } from "./offer-modal"
+
+// ⚡ Perf: Lazy load modals — only fetched when opened
+const DeleteCarModal = dynamic(() => import("./delete-car-modal").then(m => ({ default: m.DeleteCarModal })), { ssr: false })
+const OfferModal = dynamic(() => import("./offer-modal").then(m => ({ default: m.OfferModal })), { ssr: false })
 
 export function CarCard({ car, showDelete = false }: { car: any; showDelete?: boolean }) {
   const { isCustomerMode } = useCustomerMode()
@@ -56,10 +60,14 @@ export function CarCard({ car, showDelete = false }: { car: any; showDelete?: bo
       {/* Visual Header */}
       <div className="aspect-[4/3] w-full bg-muted relative overflow-hidden shrink-0">
         {car.images && car.images[0] ? (
-          <img 
+          <Image 
             src={car.images[0]} 
-            alt={`${car.brand} ${car.model}`} 
+            alt={`${car.brand} ${car.model}`}
+            width={400}
+            height={300}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700" 
+            loading="lazy"
           />
         ) : (
           <div className="flex items-center justify-center w-full h-full text-muted-foreground text-[10px] font-black uppercase tracking-widest bg-muted/50">

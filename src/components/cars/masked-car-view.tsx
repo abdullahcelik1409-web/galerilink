@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Gauge, CheckCircle2, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react"
@@ -32,10 +33,14 @@ export function MaskedCarView({ car }: { car: any }) {
         <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-muted group select-none">
           {hasImages ? (
             <>
-              <img 
+              <Image 
                 src={car.images[currentImage]} 
                 alt={`${car.brand} ${car.model}`}
+                width={600}
+                height={450}
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="w-full h-full object-cover transition-transform duration-500"
+                priority
               />
               {car.images.length > 1 && (
                 <>

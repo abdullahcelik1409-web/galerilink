@@ -5,13 +5,15 @@ import { ThemeProvider } from "@/components/providers/theme-provider"
 
 const firaSans = Fira_Sans({ 
   subsets: ["latin"], 
-  weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-fira-sans"
+  weight: ["400", "700", "800"],
+  variable: "--font-fira-sans",
+  display: "swap",
 })
 
 const firaCode = Fira_Code({ 
   subsets: ["latin"],
-  variable: "--font-fira-code"
+  variable: "--font-fira-code",
+  display: "swap",
 })
 
 export const metadata: Metadata = {

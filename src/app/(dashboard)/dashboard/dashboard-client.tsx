@@ -7,7 +7,7 @@ import { Flame, ArrowRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { createClient } from "@/lib/supabase/client"
+import { getTaxonomyMap } from "@/lib/taxonomy-cache"
 
 interface DashboardClientProps {
   cars: any[];
@@ -32,18 +32,11 @@ export function DashboardClient({ cars, userCity, userDistrict }: DashboardClien
     district: null
   })
 
-  // Full taxonomy cache for path matching
+  // ⚡ Perf: Singleton taxonomy cache — not re-fetched on every navigation
   const [taxonomyMap, setTaxonomyMap] = useState<Map<string, any>>(new Map())
-  const supabase = createClient()
 
   useEffect(() => {
-    async function loadTaxonomy() {
-      const { data } = await supabase.from('car_taxonomy').select('id, parent_id, name, level')
-      const map = new Map()
-      data?.forEach(node => map.set(node.id, node))
-      setTaxonomyMap(map)
-    }
-    loadTaxonomy()
+    getTaxonomyMap().then(setTaxonomyMap)
   }, [])
 
   // Helper to get full ancestry

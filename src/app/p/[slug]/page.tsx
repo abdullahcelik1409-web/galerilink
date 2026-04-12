@@ -2,7 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { MaskedCarView } from '@/components/cars/masked-car-view'
 
-export const dynamic = 'force-dynamic'
+// ⚡ Perf: ISR — regenerate every 60s instead of cold start on every visit
+export const revalidate = 60
 
 export default async function MaskedListingPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
