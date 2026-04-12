@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CarImageGallery } from "@/components/cars/car-image-gallery"
-import { MapPin, Calendar, Gauge, Phone, Store, Info, ShieldCheck, ChevronLeft, Activity, Sparkles, CheckCircle2, Zap, Banknote } from "lucide-react"
+import { MapPin, Calendar, Gauge, Phone, Store, Info, ShieldCheck, ChevronLeft, Activity, Sparkles, CheckCircle2, Zap, Banknote, MessageCircle } from "lucide-react"
 import { ExpertiseSelector } from "./expertise-selector"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -61,7 +61,15 @@ export function CarDetailView({ car, isOwner }: CarDetailViewProps) {
                     Hemen Ara
                   </a>
                </Button>
-               <p className="text-[10px] text-center font-bold text-muted-foreground dark:text-white/30 uppercase tracking-widest leading-relaxed">Telefonla doğrudan galeriye bağlanın.</p>
+               {!isOwner && (
+                 <Button variant="secondary" className="w-full h-14 md:h-16 rounded-2xl text-base md:text-lg font-black uppercase tracking-widest gap-3 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors" asChild>
+                    <Link href={`/messages?car=${car.id}&seller=${car.seller_id}`}>
+                      <MessageCircle className="w-6 h-6" />
+                      Mesaj Gönder
+                    </Link>
+                 </Button>
+               )}
+               <p className="text-[10px] text-center font-bold text-muted-foreground dark:text-white/30 uppercase tracking-widest leading-relaxed mt-2">İlan sahibine anında ulaşın.</p>
 
                {/* Opportunity Offer Button */}
                {isOpportunity && !isOwner && (

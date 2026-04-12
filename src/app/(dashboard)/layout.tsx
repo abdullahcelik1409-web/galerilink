@@ -2,6 +2,7 @@ import { CustomerModeProvider } from "@/components/providers/customer-mode-provi
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { OfferNotification } from "@/components/cars/offer-notification"
+import { GlobalMessageToast } from "@/components/chat/message-toast"
 import { getAuthUser, getProfile } from "@/lib/supabase/auth-cache"
 import { redirect } from "next/navigation"
 
@@ -46,6 +47,7 @@ export default async function DashboardLayout({
           </main>
         </div>
         <OfferNotification userId={user.id} />
+        <GlobalMessageToast />
       </div>
     </CustomerModeProvider>
   )

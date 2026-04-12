@@ -75,3 +75,103 @@ CREATE POLICY "Approved users can view active cars" ON public.cars
 CREATE POLICY "Users can insert their own cars" ON public.cars FOR INSERT WITH CHECK (auth.uid() = seller_id);
 CREATE POLICY "Users can update their own cars" ON public.cars FOR UPDATE USING (auth.uid() = seller_id);
 CREATE POLICY "Users can delete their own cars" ON public.cars FOR DELETE USING (auth.uid() = seller_id);
+
+-- ==========================================
+-- MESSAGING SYSTEM (Conversations, Messages, Blocks)
+-- ==========================================
+
+-- Conversations table
+CREATE TABLE public.conversations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  car_id UUID REFERENCES public.cars(id) ON DELETE CASCADE NOT NULL,
+  buyer_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  seller_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(car_id, buyer_id)
+);
+
+-- Messages table
+CREATE TABLE public.messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id UUID REFERENCES public.conversations(id) ON DELETE CASCADE NOT NULL,
+  sender_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  content TEXT NOT NULL,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Blocks table
+CREATE TABLE public.blocks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  blocker_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  blocked_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(blocker_id, blocked_id)
+);
+
+-- Enable RLS
+ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.blocks ENABLE ROW LEVEL SECURITY;
+
+-- Conversations RLS
+CREATE POLICY "Users can view their conversations" ON public.conversations
+  FOR SELECT USING (auth.uid() = buyer_id OR auth.uid() = seller_id);
+
+CREATE POLICY "Users can insert conversations" ON public.conversations
+  FOR INSERT WITH CHECK (auth.uid() = buyer_id OR auth.uid() = seller_id);
+
+CREATE POLICY "Users can update their conversations" ON public.conversations
+  FOR UPDATE USING (auth.uid() = buyer_id OR auth.uid() = seller_id);
+
+-- Messages RLS
+-- A user can view a message if they are part of the conversation
+CREATE POLICY "Users can view messages in their conversations" ON public.messages
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.conversations c
+      WHERE c.id = conversation_id
+      AND (c.buyer_id = auth.uid() OR c.seller_id = auth.uid())
+    )
+  );
+
+-- A user can insert a message if they are part of the conversation and NOT BLOCKED
+CREATE POLICY "Users can insert messages" ON public.messages
+  FOR INSERT WITH CHECK (
+    auth.uid() = sender_id AND
+    EXISTS (
+      SELECT 1 FROM public.conversations c
+      WHERE c.id = conversation_id
+      AND (c.buyer_id = auth.uid() OR c.seller_id = auth.uid())
+    ) AND
+    NOT EXISTS (
+      SELECT 1 FROM public.blocks b
+      WHERE (b.blocker_id = (
+        SELECT CASE 
+          WHEN c.buyer_id = auth.uid() THEN c.seller_id 
+          ELSE c.buyer_id 
+        END FROM public.conversations c WHERE c.id = conversation_id
+      ) AND b.blocked_id = auth.uid())
+    )
+  );
+
+-- Users can update is_read of messages in their conversations
+CREATE POLICY "Users can update messages" ON public.messages
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.conversations c
+      WHERE c.id = conversation_id
+      AND (c.buyer_id = auth.uid() OR c.seller_id = auth.uid())
+    )
+  );
+
+-- Blocks RLS
+CREATE POLICY "Users can view their blocks" ON public.blocks
+  FOR SELECT USING (auth.uid() = blocker_id OR auth.uid() = blocked_id);
+
+CREATE POLICY "Users can insert blocks" ON public.blocks
+  FOR INSERT WITH CHECK (auth.uid() = blocker_id);
+
+CREATE POLICY "Users can delete blocks" ON public.blocks
+  FOR DELETE USING (auth.uid() = blocker_id);
