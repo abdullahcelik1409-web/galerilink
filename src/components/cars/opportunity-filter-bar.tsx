@@ -82,10 +82,10 @@ export function OpportunityFilterBar({ onFilterChange, resultCount, variant = 'e
                  focusBorderClass
                )}
              >
-               <option value="newest">En Yeni İlanlar</option>
-               <option value="oldest">En Eski İlanlar</option>
-               <option value="expensive">En Yüksek Fiyat</option>
-               <option value="cheap">En Düşük Fiyat</option>
+               <option value="newest" className="bg-slate-900 text-white">En Yeni İlanlar</option>
+               <option value="oldest" className="bg-slate-900 text-white">En Eski İlanlar</option>
+               <option value="expensive" className="bg-slate-900 text-white">En Yüksek Fiyat</option>
+               <option value="cheap" className="bg-slate-900 text-white">En Düşük Fiyat</option>
              </select>
              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
                 <ChevronDown className="w-4 h-4" />
@@ -101,7 +101,7 @@ export function OpportunityFilterBar({ onFilterChange, resultCount, variant = 'e
                     ? "bg-emerald-500 text-white border-emerald-400 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)]" 
                     : "bg-white/5 text-white border-white/10 hover:bg-white/10")
                 : (localFilters.tax_path.length > 0 || localFilters.gearType || localFilters.bodyType || localFilters.city || localFilters.district
-                    ? "bg-primary text-white border-primary shadow-[0_10px_20px_-5px_rgba(var(--primary),0.4)]" 
+                    ? "bg-primary text-primary-foreground border-primary shadow-[0_10px_20px_-5px_rgba(var(--primary),0.4)]" 
                     : "bg-white/5 text-white border-white/10 hover:bg-white/10")
             )}
           >

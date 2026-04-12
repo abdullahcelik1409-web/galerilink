@@ -7,6 +7,8 @@ interface TaxonomyNode {
   parent_id: string | null
   name: string
   level: string
+  slug?: string
+  logo_url?: string
 }
 
 // ⚡ Perf: Singleton taxonomy cache — fetched once, reused across navigations
@@ -34,7 +36,7 @@ export async function getTaxonomyMap(): Promise<Map<string, TaxonomyNode>> {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('car_taxonomy')
-        .select('id, parent_id, name, level')
+        .select('id, parent_id, name, level, slug, logo_url')
 
       if (error) {
         console.error('Taxonomy cache fetch error:', error)

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { ChevronRight, Search, Check, Loader2, ArrowLeft, Building2 } from "lucide-react"
+import { getTaxonomyMap } from "@/lib/taxonomy-cache"
 import { cn } from "@/lib/utils"
 
 interface TaxonomyItem {
@@ -71,6 +72,8 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, onStepChange, i
     }
   }, [mobileActiveIndex, onStepChange])
 
+  // ⚡ Perf: Use the shared memory cache for instant 0ms column loading!
+
   async function loadColumn(level: string, parentId: string | null, index: number) {
     const nextLevelIndex = index
     
@@ -78,37 +81,31 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, onStepChange, i
     setColumns(prev => prev.slice(0, nextLevelIndex))
     setColumns(prev => [...prev, { level, items: [], loading: true }])
 
-    let query = supabase
-      .from('car_taxonomy')
-      .select('*')
-      .eq('level', level)
-      .order('name', { ascending: true })
+    try {
+      // ⚡ This resolves instantly if already cached
+      const taxonomyMap = await getTaxonomyMap()
+      
+      const allItems = Array.from(taxonomyMap.values())
+      const filteredItems = allItems.filter(item => 
+        item.level === level && 
+        (parentId === null ? item.parent_id === null : item.parent_id === parentId)
+      ).sort((a, b) => a.name.localeCompare(b.name, 'tr-TR')) // Locale-aware Turkish sort
 
-    if (parentId === null) {
-      query = query.is('parent_id', null)
-    } else {
-      query = query.eq('parent_id', parentId)
-    }
-
-    const { data, error } = await query
-
-    if (error) {
-      console.error('Failed to load taxonomy:', error.message)
+      setColumns(prev => {
+        const updated = [...prev]
+        if (updated[nextLevelIndex]) {
+          updated[nextLevelIndex] = { level, items: filteredItems as TaxonomyItem[], loading: false }
+        }
+        return updated
+      })
+    } catch (error) {
+      console.error('Failed to load taxonomy from cache:', error)
       setColumns(prev => {
         const updated = [...prev]
         if (updated[nextLevelIndex]) updated[nextLevelIndex].loading = false
         return updated
       })
-      return
     }
-
-    setColumns(prev => {
-      const updated = [...prev]
-      if (updated[nextLevelIndex]) {
-        updated[nextLevelIndex] = { level, items: data || [], loading: false }
-      }
-      return updated
-    })
   }
 
   const handleSelect = (item: TaxonomyItem, columnIndex: number) => {
