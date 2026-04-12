@@ -18,6 +18,7 @@ import { ExpertiseSelector } from "./expertise-selector"
 import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-optimization"
 import { TaxonomyColumnSelector } from "./taxonomy-column-selector"
+import { toast } from "sonner"
 
 interface ImageState {
   file: File;
@@ -382,6 +383,13 @@ export function AddCarForm() {
     }
   }
 
+  const onInvalid = (errors: any) => {
+    // Show a toast with the first error message or a general message
+    const firstErrorMsg = Object.values(errors)[0] as any
+    toast.error(firstErrorMsg?.message || "Lütfen formdaki eksik veya hatalı alanları kontrol edin.")
+    console.error("Form validation errors:", errors)
+  }
+
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20">
       {/* Journey Header */}
@@ -420,7 +428,7 @@ export function AddCarForm() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
         
         {/* Left Multi-form Track (8 cols) */}
         <div className="md:col-span-8 space-y-12">
