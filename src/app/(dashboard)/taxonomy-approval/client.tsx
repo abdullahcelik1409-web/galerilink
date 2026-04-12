@@ -104,7 +104,7 @@ export default function TaxonomyApprovalClient() {
           disabled={loading}
           className="flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl transition-colors text-sm font-bold uppercase"
         >
-          <RefreshCw className={\`w-4 h-4 \${loading ? 'animate-spin' : ''}\`} />
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Yenile
         </button>
       </div>
