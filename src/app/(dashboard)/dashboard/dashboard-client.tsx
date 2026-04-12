@@ -106,8 +106,8 @@ export function DashboardClient({ cars, userCity, userDistrict }: DashboardClien
 
     // Sorting
     result.sort((a, b) => {
-      if (filters.sortBy === 'expensive') return b.price_b2b - a.price_b2b
-      if (filters.sortBy === 'cheap') return a.price_b2b - b.price_b2b
+      if (filters.sortBy === 'expensive') return Number(b.price_b2b) - Number(a.price_b2b)
+      if (filters.sortBy === 'cheap') return Number(a.price_b2b) - Number(b.price_b2b)
       if (filters.sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
