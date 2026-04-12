@@ -10,7 +10,8 @@ import {
   CreditCard, 
   Trash2, 
   Check, 
-  SlidersHorizontal 
+  SlidersHorizontal,
+  Search
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTaxonomyFilters, type TaxonomyNode } from "@/hooks/use-taxonomy-filters"
@@ -168,6 +169,24 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-8 space-y-12 custom-scrollbar pb-32">
           
+          {/* 0. Kelime ile Arama */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-3 mb-2">
+               <Search className={cn("w-4 h-4", accentClass)} />
+               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/70">Metin İçi Arama</h3>
+            </div>
+            <div className="relative group">
+               <Search className={cn("absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 transition-colors", "group-focus-within:" + accentClass)} />
+               <input 
+                 type="text" 
+                 placeholder="Örn: Boyasız, Hatasız, AMG..."
+                 value={currentFilters.search || ""}
+                 onChange={(e) => onFilterUpdate({ search: e.target.value })}
+                 className="w-full h-14 bg-white/5 border border-white/5 rounded-2xl pl-12 pr-4 outline-none focus:border-white/20 text-xs font-black text-white placeholder:text-white/20"
+               />
+            </div>
+          </section>
+
           {/* 1. Lokasyon Filtreleri (New) */}
           <section className="space-y-6">
             <div className="flex items-center gap-3 mb-2">

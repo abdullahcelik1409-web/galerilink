@@ -62,7 +62,7 @@ export function DashboardClient({ cars, userCity, userDistrict }: DashboardClien
       // 1. Keyword Search
       if (filters.search) {
         const s = filters.search.toLowerCase()
-        const searchable = `${car.brand} ${car.model} ${car.title} ${car.location_city}`.toLowerCase()
+        const searchable = `${car.brand} ${car.model} ${car.title} ${car.location_city} ${car.damage_report || ''}`.toLowerCase()
         if (!searchable.includes(s)) return false
       }
 

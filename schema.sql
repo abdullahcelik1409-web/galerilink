@@ -57,8 +57,8 @@ CREATE TRIGGER on_auth_user_created
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cars ENABLE ROW LEVEL SECURITY;
 
--- Profiles: Users can read their own profile
-CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
+-- Profiles: Users can read their own profile (and others basic info)
+CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (true);
 
 -- Cars: Any authenticated user can view active cars IF they are approved and their trial is not expired
 CREATE POLICY "Approved users can view active cars" ON public.cars

@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Send, CheckCircle2, ShieldAlert, User } from 'lucide-react'
+import { Send, CheckCircle2, ShieldAlert, User, Car } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function ChatBox({ conversation }: { conversation: any }) {
@@ -159,6 +159,26 @@ export function ChatBox({ conversation }: { conversation: any }) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30 dark:bg-slate-950/30">
+        {/* Inline Car Context */}
+        {!loading && conversation?.car && (
+          <div className="mx-auto w-full max-w-sm mb-8 bg-card border rounded-2xl p-3 shadow-sm flex items-center gap-4">
+            {conversation.car.images?.[0] ? (
+              <img src={conversation.car.images[0]} className="w-16 h-16 rounded-xl object-cover shrink-0" alt="" />
+            ) : (
+              <div className="w-16 h-16 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+                <Car className="w-6 h-6 text-muted-foreground/50" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-bold truncate text-foreground">{conversation.car.title || `${conversation.car.brand} ${conversation.car.model}`}</h4>
+              <p className="text-xs text-muted-foreground mt-1.5 font-medium flex items-center gap-1.5">
+                <ShieldAlert className="w-3 h-3" />
+                Bu ilan için mesajlaşıyorsunuz
+              </p>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="text-center text-sm text-muted-foreground">Yükleniyor...</div>
         ) : messages.length === 0 ? (
