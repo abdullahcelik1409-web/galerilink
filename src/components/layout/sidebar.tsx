@@ -3,7 +3,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useCustomerMode } from "@/components/providers/customer-mode-provider"
-import { Car, LayoutDashboard, Settings, PlusCircle, Flame, Banknote } from "lucide-react"
+import { Car, LayoutDashboard, Settings, PlusCircle, Flame, Banknote, MessageCircle } from "lucide-react"
 
 export function Sidebar({ className }: { className?: string }) {
   const pathname = usePathname()
@@ -41,6 +41,10 @@ export function Sidebar({ className }: { className?: string }) {
                 <Link href="/dashboard/add-car" className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all", pathname === '/dashboard/add-car' ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-primary hover:bg-primary/5")}>
                   <PlusCircle className="h-4 w-4" />
                   Yeni İlan Ekle
+                </Link>
+                <Link href="/messages" className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all", pathname.startsWith('/messages') ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50")}>
+                  <MessageCircle className="h-4 w-4" />
+                  Mesajlarım
                 </Link>
                 <Link href="/dashboard/settings" className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all mt-8", pathname === '/dashboard/settings' ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50")}>
                   <Settings className="h-4 w-4" />
