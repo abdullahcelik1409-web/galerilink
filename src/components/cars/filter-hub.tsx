@@ -169,11 +169,11 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-8 space-y-12 custom-scrollbar pb-32">
           
-          {/* 0. Kelime ile Arama */}
+          {/* 0. Kelime İle Filtrele */}
           <section className="space-y-6">
             <div className="flex items-center gap-3 mb-2">
                <Search className={cn("w-4 h-4", accentClass)} />
-               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/70">Metin İçi Arama</h3>
+               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/70">Kelime İle Filtrele</h3>
             </div>
             <div className="relative group">
                <Search className={cn("absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 transition-colors", "group-focus-within:" + accentClass)} />
