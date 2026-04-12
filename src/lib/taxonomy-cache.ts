@@ -34,17 +34,33 @@ export async function getTaxonomyMap(): Promise<Map<string, TaxonomyNode>> {
   pendingFetch = (async () => {
     try {
       const supabase = createClient()
-      const { data, error } = await supabase
-        .from('car_taxonomy')
-        .select('id, parent_id, name, level, slug, logo_url')
-
-      if (error) {
-        console.error('Taxonomy cache fetch error:', error)
-        return taxonomyCache || new Map()
-      }
-
       const map = new Map<string, TaxonomyNode>()
-      data?.forEach((node: any) => map.set(node.id, node))
+      let hasMore = true
+      let offset = 0
+      const limit = 1000
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('car_taxonomy')
+          .select('id, parent_id, name, level, slug, logo_url')
+          .range(offset, offset + limit - 1)
+
+        if (error) {
+          console.error('Taxonomy cache fetch error:', error)
+          return taxonomyCache || new Map()
+        }
+
+        if (data) {
+          data.forEach((node: any) => map.set(node.id, node))
+          if (data.length < limit) {
+            hasMore = false
+          } else {
+            offset += limit
+          }
+        } else {
+          hasMore = false
+        }
+      }
 
       taxonomyCache = map
       cacheTimestamp = Date.now()
