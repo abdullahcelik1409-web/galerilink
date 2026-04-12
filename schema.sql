@@ -175,3 +175,15 @@ CREATE POLICY "Users can insert blocks" ON public.blocks
 
 CREATE POLICY "Users can delete blocks" ON public.blocks
   FOR DELETE USING (auth.uid() = blocker_id);
+
+-- Taxonomy RLS
+ALTER TABLE public.car_taxonomy ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view taxonomy" ON public.car_taxonomy
+  FOR SELECT USING (true);
+
+CREATE POLICY "Users can insert pending taxonomy" ON public.car_taxonomy
+  FOR INSERT TO authenticated WITH CHECK (status = 'pending');
+
+CREATE POLICY "Users can update pending taxonomy" ON public.car_taxonomy
+  FOR UPDATE TO authenticated USING (status = 'pending');
