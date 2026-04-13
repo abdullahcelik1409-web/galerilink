@@ -15,7 +15,7 @@ import { OpportunityBadge } from "./opportunity-badge"
 const DeleteCarModal = dynamic(() => import("./delete-car-modal").then(m => ({ default: m.DeleteCarModal })), { ssr: false })
 const OfferModal = dynamic(() => import("./offer-modal").then(m => ({ default: m.OfferModal })), { ssr: false })
 
-export function CarCard({ car, showDelete = false }: { car: any; showDelete?: boolean }) {
+export function CarCard({ car, showDelete = false, priority = false }: { car: any; showDelete?: boolean; priority?: boolean }) {
   const { isCustomerMode } = useCustomerMode()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -65,9 +65,10 @@ export function CarCard({ car, showDelete = false }: { car: any; showDelete?: bo
             alt={`${car.brand} ${car.model}`}
             width={400}
             height={300}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700" 
-            loading="lazy"
+            priority={priority}
+            loading={priority ? undefined : "lazy"}
           />
         ) : (
           <div className="flex items-center justify-center w-full h-full text-muted-foreground text-[10px] font-black uppercase tracking-widest bg-muted/50">

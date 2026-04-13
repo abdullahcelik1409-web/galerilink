@@ -1,49 +1,103 @@
 "use client"
 
-import { Search, SlidersHorizontal, ArrowUpDown, ChevronDown, Sparkles } from "lucide-react"
+import { Search, SlidersHorizontal, ArrowUpDown, ChevronDown } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { FilterHub } from "./filter-hub"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 
 interface OpportunityFilterBarProps {
-  onFilterChange: (filters: any) => void;
-  resultCount: number;
+  resultCount: React.ReactNode | number;
   variant?: 'emerald' | 'primary';
-  currentFilters: any;
-  onSearch: (value: string) => void;
 }
 
-export function OpportunityFilterBar({ onFilterChange, resultCount, variant = 'emerald' }: OpportunityFilterBarProps) {
+export function OpportunityFilterBar({ resultCount, variant = 'emerald' }: OpportunityFilterBarProps) {
   const [isHubOpen, setIsHubOpen] = useState(false)
   const isEmerald = variant === 'emerald'
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+
+  // Extract initial state from URL
   const [localFilters, setLocalFilters] = useState({
-    search: "",
-    sortBy: "newest",
-    tax_path: [],
-    minKm: null,
-    maxKm: null,
-    minYear: null,
-    maxYear: null,
-    gearType: null,
-    bodyType: null,
-    minPrice: null,
-    maxPrice: null,
-    city: null,
-    district: null
+    search: searchParams.get('search') || "",
+    sortBy: searchParams.get('sortBy') || "newest",
+    tax_path: searchParams.get('tax_path') ? searchParams.get('tax_path')?.split(',') : [],
+    minKm: searchParams.get('minKm') || null,
+    maxKm: searchParams.get('maxKm') || null,
+    minYear: searchParams.get('minYear') || null,
+    maxYear: searchParams.get('maxYear') || null,
+    gearType: searchParams.get('gearType') || null,
+    bodyType: searchParams.get('bodyType') || null,
+    minPrice: searchParams.get('minPrice') || null,
+    maxPrice: searchParams.get('maxPrice') || null,
+    city: searchParams.get('city') || null,
+    district: searchParams.get('district') || null
   })
 
-  // Sync back to parent — debounced to prevent render loop
-  const prevFiltersRef = useRef(JSON.stringify(localFilters))
+  // Keep local filters in sync if URL changes outside (e.g. Back button)
   useEffect(() => {
-    const serialized = JSON.stringify(localFilters)
-    if (serialized !== prevFiltersRef.current) {
-      prevFiltersRef.current = serialized
-      onFilterChange(localFilters)
-    }
-  }, [localFilters, onFilterChange])
+    setLocalFilters({
+      search: searchParams.get('search') || "",
+      sortBy: searchParams.get('sortBy') || "newest",
+      tax_path: searchParams.get('tax_path') ? searchParams.get('tax_path')?.split(',') : [],
+      minKm: searchParams.get('minKm') || null,
+      maxKm: searchParams.get('maxKm') || null,
+      minYear: searchParams.get('minYear') || null,
+      maxYear: searchParams.get('maxYear') || null,
+      gearType: searchParams.get('gearType') || null,
+      bodyType: searchParams.get('bodyType') || null,
+      minPrice: searchParams.get('minPrice') || null,
+      maxPrice: searchParams.get('maxPrice') || null,
+      city: searchParams.get('city') || null,
+      district: searchParams.get('district') || null
+    })
+  }, [searchParams])
 
-  const handleUpdate = (updates: any) => {
+  const pushToUrl = (filtersToPush: any) => {
+    const params = new URLSearchParams(searchParams.toString())
+    for (const [key, value] of Object.entries(filtersToPush)) {
+      if (value === null || value === '' || (Array.isArray(value) && value.length === 0) || value === 'null') {
+        params.delete(key)
+      } else if (Array.isArray(value)) {
+        params.set(key, value.join(','))
+      } else {
+        params.set(key, String(value))
+      }
+    }
+    // Her filtre değişiminde sayfa 1'e dön
+    params.set('page', '1')
+    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+  }
+
+  // Anından URL'e yansıtılacak değişiklikler (Search, Sort)
+  const handleImmediateUpdate = (updates: any) => {
+    setLocalFilters(prev => {
+      const next = { ...prev, ...updates }
+      pushToUrl(next)
+      return next
+    })
+  }
+
+  // Sadece Local State'i güncelleyenler (FilterHub içindeki anlık etkileşimler)
+  const handleLocalUpdate = (updates: any) => {
     setLocalFilters(prev => ({ ...prev, ...updates }))
+  }
+
+  // FilterHub "Sonuçları Gör" butonuna basınca URL'i güncelle
+  const applyFilters = () => {
+    pushToUrl(localFilters)
+    setIsHubOpen(false)
+  }
+
+  const debouncedSearchTimeout = useRef<NodeJS.Timeout | null>(null)
+  
+  const handleSearchChange = (val: string) => {
+    setLocalFilters(prev => ({ ...prev, search: val }))
+    if (debouncedSearchTimeout.current) clearTimeout(debouncedSearchTimeout.current)
+    debouncedSearchTimeout.current = setTimeout(() => {
+      pushToUrl({ ...localFilters, search: val })
+    }, 500)
   }
 
   const accentClass = isEmerald ? "text-emerald-400" : "text-primary"
@@ -61,7 +115,7 @@ export function OpportunityFilterBar({ onFilterChange, resultCount, variant = 'e
             type="text"
             placeholder="Kelime, marka veya model ara..."
             value={localFilters.search}
-            onChange={(e) => handleUpdate({ search: e.target.value })}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className={cn(
               "w-full h-14 pl-12 pr-4 bg-white/5 border border-white/10 rounded-2xl outline-none transition-all text-sm font-medium",
               focusBorderClass
@@ -76,7 +130,7 @@ export function OpportunityFilterBar({ onFilterChange, resultCount, variant = 'e
              </div>
              <select 
                value={localFilters.sortBy}
-               onChange={(e) => handleUpdate({ sortBy: e.target.value })}
+               onChange={(e) => handleImmediateUpdate({ sortBy: e.target.value })}
                className={cn(
                  "w-full h-14 pl-10 pr-10 bg-white/5 border border-white/10 rounded-2xl outline-none appearance-none transition-all text-xs font-black uppercase tracking-widest cursor-pointer",
                  focusBorderClass
@@ -97,19 +151,19 @@ export function OpportunityFilterBar({ onFilterChange, resultCount, variant = 'e
             className={cn(
               "h-14 px-6 rounded-2xl flex items-center gap-3 transition-all font-black text-xs uppercase tracking-widest border",
               isEmerald 
-                ? (localFilters.tax_path.length > 0 || localFilters.gearType || localFilters.bodyType || localFilters.city || localFilters.district
+                ? ((localFilters.tax_path as string[])?.length > 0 || localFilters.gearType || localFilters.bodyType || localFilters.city || localFilters.district
                     ? "bg-emerald-500 text-white border-emerald-400 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.4)]" 
                     : "bg-white/5 text-white border-white/10 hover:bg-white/10")
-                : (localFilters.tax_path.length > 0 || localFilters.gearType || localFilters.bodyType || localFilters.city || localFilters.district
+                : ((localFilters.tax_path as string[])?.length > 0 || localFilters.gearType || localFilters.bodyType || localFilters.city || localFilters.district
                     ? "bg-primary text-primary-foreground border-primary shadow-[0_10px_20px_-5px_rgba(var(--primary),0.4)]" 
                     : "bg-white/5 text-white border-white/10 hover:bg-white/10")
             )}
           >
             <SlidersHorizontal className="w-4 h-4" />
             <span>Filtrele</span>
-            {(localFilters.tax_path.length > 0 || localFilters.city) && (
+            {((localFilters.tax_path as string[])?.length > 0 || localFilters.city) && (
                 <span className={cn("w-5 h-5 rounded-full bg-white flex items-center justify-center text-[10px] font-black", accentClass)}>
-                  {localFilters.tax_path.length + (localFilters.city ? 1 : 0)}
+                  {(localFilters.tax_path as string[])?.length + (localFilters.city ? 1 : 0)}
                 </span>
             )}
           </button>
@@ -118,8 +172,8 @@ export function OpportunityFilterBar({ onFilterChange, resultCount, variant = 'e
 
       <FilterHub 
         isOpen={isHubOpen}
-        onClose={() => setIsHubOpen(false)}
-        onFilterUpdate={handleUpdate}
+        onClose={applyFilters}
+        onFilterUpdate={handleLocalUpdate}
         currentFilters={localFilters}
         resultCount={resultCount}
         variant={variant}
@@ -127,4 +181,5 @@ export function OpportunityFilterBar({ onFilterChange, resultCount, variant = 'e
     </div>
   )
 }
+
 

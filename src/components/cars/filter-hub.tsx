@@ -30,7 +30,7 @@ interface FilterHubProps {
   onClose: () => void;
   onFilterUpdate: (filters: any) => void;
   currentFilters: any;
-  resultCount: number;
+  resultCount: React.ReactNode | number;
   variant?: 'emerald' | 'primary';
 }
 
