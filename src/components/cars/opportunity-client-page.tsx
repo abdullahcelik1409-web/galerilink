@@ -5,27 +5,31 @@ import { CarCard } from "@/components/cars/car-card"
 import { Flame, Info } from "lucide-react"
 import { OpportunityFilterBar } from "./opportunity-filter-bar"
 import { getTaxonomyMap } from "@/lib/taxonomy-cache"
+import { useSearchParams } from "next/navigation"
 
 interface OpportunityClientPageProps {
   initialCars: any[]
 }
 
 export function OpportunityClientPage({ initialCars }: OpportunityClientPageProps) {
-  const [filters, setFilters] = useState<any>({
-    minPrice: null,
-    maxPrice: null,
-    sortBy: "newest",
-    search: "",
-    tax_path: [],
-    minKm: null,
-    maxKm: null,
-    minYear: null,
-    maxYear: null,
-    gearType: null,
-    bodyType: null,
-    city: null,
-    district: null
-  })
+  const searchParams = useSearchParams();
+
+  // Extract initial state from URL
+  const filters = useMemo(() => ({
+    search: searchParams.get('search') || "",
+    sortBy: searchParams.get('sortBy') || "newest",
+    tax_path: searchParams.get('tax_path') ? searchParams.get('tax_path')?.split(',') : [],
+    minKm: searchParams.get('minKm') ? Number(searchParams.get('minKm')) : null,
+    maxKm: searchParams.get('maxKm') ? Number(searchParams.get('maxKm')) : null,
+    minYear: searchParams.get('minYear') ? Number(searchParams.get('minYear')) : null,
+    maxYear: searchParams.get('maxYear') ? Number(searchParams.get('maxYear')) : null,
+    gearType: searchParams.get('gearType') || null,
+    bodyType: searchParams.get('bodyType') || null,
+    minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : null,
+    maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : null,
+    city: searchParams.get('city') || null,
+    district: searchParams.get('district') || null
+  }), [searchParams])
 
   // ⚡ Perf: Singleton taxonomy cache — not re-fetched on every navigation
   const [taxonomyMap, setTaxonomyMap] = useState<Map<string, any>>(new Map())
@@ -77,7 +81,7 @@ export function OpportunityClientPage({ initialCars }: OpportunityClientPageProp
       }
 
       // 4. Hierarchical Path
-      if (filters.tax_path.length > 0) {
+      if (filters.tax_path && filters.tax_path.length > 0) {
           const carPathIds = car.ancestry.map((n: any) => n.id)
           // Every ID in selected tax_path must be in car's ancestry
           const match = filters.tax_path.every((id: string) => carPathIds.includes(id))
@@ -128,9 +132,6 @@ export function OpportunityClientPage({ initialCars }: OpportunityClientPageProp
       <div className="relative">
          <OpportunityFilterBar 
            resultCount={filteredCars.length}
-           onFilterChange={(newFilters) => setFilters(newFilters)} 
-           currentFilters={filters}
-           onSearch={(val) => setFilters((f: any) => ({ ...f, search: val }))}
          />
       </div>
 
