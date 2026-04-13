@@ -36,10 +36,9 @@ export function MaskedCarView({ car }: { car: any }) {
               <Image 
                 src={car.images[currentImage]} 
                 alt={`${car.brand} ${car.model}`}
-                width={600}
-                height={450}
+                fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
-                className="w-full h-full object-cover transition-transform duration-500"
+                className="object-cover transition-transform duration-500"
                 priority
               />
               {car.images.length > 1 && (

@@ -6,6 +6,114 @@ import { Select as SelectPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+// Hook to detect mobile (SSR-safe)
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(false)
+  React.useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+  return isMobile
+}
+
+// ─── NATIVE SELECT FOR MOBILE ────────────────────────────────────
+// Renders a standard HTML <select> on mobile for buttery-smooth scrolling.
+// On desktop (>=768px), renders the full Radix Select.
+// ──────────────────────────────────────────────────────────────────
+
+interface MobileSelectProps {
+  value?: string
+  onValueChange?: (val: string) => void
+  disabled?: boolean
+  children: React.ReactNode
+  placeholder?: string
+  triggerClassName?: string
+  contentClassName?: string
+}
+
+/**
+ * AdaptiveSelect — uses native <select> on mobile, Radix on desktop.
+ * To use, replace <Select> with <AdaptiveSelect> and pass items via `items` prop
+ * instead of composing with SelectContent/SelectItem children.
+ */
+interface AdaptiveSelectProps {
+  value?: string
+  onValueChange?: (val: string) => void
+  disabled?: boolean
+  placeholder?: string
+  triggerClassName?: string
+  contentClassName?: string
+  items: { value: string; label: string; icon?: React.ReactNode }[]
+}
+
+function AdaptiveSelect({
+  value,
+  onValueChange,
+  disabled,
+  placeholder,
+  triggerClassName,
+  contentClassName,
+  items,
+}: AdaptiveSelectProps) {
+  const isMobile = useIsMobile()
+
+  if (isMobile) {
+    // Native HTML <select> — zero JS overhead, instant scrolling
+    return (
+      <div className={cn("relative", disabled && "opacity-50 pointer-events-none")}>
+        <select
+          value={value || ""}
+          onChange={(e) => onValueChange?.(e.target.value)}
+          disabled={disabled}
+          className={cn(
+            "w-full appearance-none cursor-pointer",
+            "h-14 bg-white/5 border border-white/5 rounded-2xl px-4 pr-10 outline-none",
+            "text-[11px] font-black uppercase tracking-widest",
+            value && value !== "" && value !== "null" ? "text-white" : "text-white/30",
+            "focus:border-white/20 transition-colors",
+            triggerClassName
+          )}
+        >
+          {placeholder && (
+            <option value="" disabled>
+              {placeholder}
+            </option>
+          )}
+          {items.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 size-4 opacity-50 text-white pointer-events-none" />
+      </div>
+    )
+  }
+
+  // Desktop: Radix Select
+  return (
+    <Select value={value} onValueChange={onValueChange} disabled={disabled}>
+      <SelectTrigger className={triggerClassName}>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent className={contentClassName}>
+        {items.map((item) => (
+          <SelectItem key={item.value} value={item.value}>
+            <div className="flex items-center gap-3">
+              {item.icon}
+              {item.label}
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
+
+// ─── RADIX SELECT PRIMITIVES (unchanged for desktop) ─────────────
+
 function Select({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Root>) {
@@ -177,6 +285,7 @@ function SelectScrollDownButton({
 }
 
 export {
+  AdaptiveSelect,
   Select,
   SelectContent,
   SelectGroup,

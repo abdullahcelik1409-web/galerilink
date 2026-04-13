@@ -35,10 +35,9 @@ export function CarImageGallery({ images }: CarImageGalleryProps) {
         <Image 
           src={images[currentIndex]} 
           alt={`Car image ${currentIndex + 1}`}
-          width={800}
-          height={500}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="w-full h-full object-cover transition-opacity duration-300"
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
+          className="object-cover transition-opacity duration-300"
           priority={currentIndex === 0}
         />
         
@@ -82,7 +81,7 @@ export function CarImageGallery({ images }: CarImageGalleryProps) {
                   : "border-transparent hover:border-primary/40"
               )}
             >
-              <Image src={url} alt={`Thumbnail ${index + 1}`} width={96} height={60} className="w-full h-full object-cover" loading="lazy" />
+              <Image src={url} alt={`Thumbnail ${index + 1}`} fill sizes="96px" className="object-cover" loading="lazy" />
               {currentIndex !== index && <div className="absolute inset-0 bg-black/10 hover:bg-transparent transition-colors" />}
             </button>
           ))}

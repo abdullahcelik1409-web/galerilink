@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useTaxonomyFilters, type TaxonomyNode } from "@/hooks/use-taxonomy-filters"
 import { 
+  AdaptiveSelect,
   Select, 
   SelectContent, 
   SelectGroup, 
@@ -197,32 +198,33 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 ml-1">Şehir</label>
-                <Select value={currentFilters.city || ""} onValueChange={(val) => onFilterUpdate({ city: val, district: null })}>
-                  <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white">
-                    <SelectValue placeholder="Şehir Seçin" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest">
-                    <SelectItem value="null">Tümü</SelectItem>
-                    {CITIES.map(c => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <AdaptiveSelect 
+                  value={currentFilters.city || ""} 
+                  onValueChange={(val) => onFilterUpdate({ city: val, district: null })}
+                  placeholder="Şehir Seçin"
+                  triggerClassName="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white"
+                  contentClassName="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest"
+                  items={[
+                    { value: 'null', label: 'Tümü' },
+                    ...CITIES.map(c => ({ value: c, label: c }))
+                  ]}
+                />
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 ml-1">İlçe</label>
-                <Select disabled={!currentFilters.city} value={currentFilters.district || ""} onValueChange={(val) => onFilterUpdate({ district: val })}>
-                  <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white disabled:opacity-20">
-                    <SelectValue placeholder="İlçe Seçin" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest">
-                    <SelectItem value="null">Tümü</SelectItem>
-                    {districts.map(d => (
-                      <SelectItem key={d} value={d}>{d}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <AdaptiveSelect
+                  disabled={!currentFilters.city}
+                  value={currentFilters.district || ""}
+                  onValueChange={(val) => onFilterUpdate({ district: val })}
+                  placeholder="İlçe Seçin"
+                  triggerClassName="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white disabled:opacity-20"
+                  contentClassName="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest"
+                  items={[
+                    { value: 'null', label: 'Tümü' },
+                    ...districts.map(d => ({ value: d, label: d }))
+                  ]}
+                />
               </div>
             </div>
           </section>
@@ -239,34 +241,27 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
                 const options = taxonomyOptions[level] || []
                 const isSelected = currentFilters.tax_path[i]
                 const isDisabled = i > 0 && !currentFilters.tax_path[i-1]
-                const selectedNode = options.find(n => n.id === isSelected)
 
                 if (isDisabled && i > 0) return null
 
                 return (
                   <div key={level} className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 ml-1">{LEVEL_LABELS[level]}</label>
-                    <Select value={isSelected || ""} onValueChange={(val) => handleTaxSelect(val, i)}>
-                       <SelectTrigger className={cn(
-                          "h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest",
-                          isSelected ? "text-white border-white/10" : "text-white/30"
-                       )}>
-                          <div className="flex items-center gap-3">
-                             {selectedNode?.logo_url && <img src={selectedNode.logo_url} className="w-5 h-5 object-contain" alt="" />}
-                             <SelectValue placeholder={`${LEVEL_LABELS[level]} Seçin`} />
-                          </div>
-                       </SelectTrigger>
-                       <SelectContent className="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest">
-                          {options.map(opt => (
-                            <SelectItem key={opt.id} value={opt.id}>
-                               <div className="flex items-center gap-3">
-                                  {opt.logo_url && <img src={opt.logo_url} className="w-4 h-4 object-contain" alt="" />}
-                                  {opt.name}
-                               </div>
-                            </SelectItem>
-                          ))}
-                       </SelectContent>
-                    </Select>
+                    <AdaptiveSelect
+                      value={isSelected || ""}
+                      onValueChange={(val) => handleTaxSelect(val, i)}
+                      placeholder={`${LEVEL_LABELS[level]} Seçin`}
+                      triggerClassName={cn(
+                        "h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest",
+                        isSelected ? "text-white border-white/10" : "text-white/30"
+                      )}
+                      contentClassName="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest"
+                      items={options.map(opt => ({
+                        value: opt.id,
+                        label: opt.name,
+                        icon: opt.logo_url ? <img src={opt.logo_url} className="w-4 h-4 object-contain" alt="" /> : undefined
+                      }))}
+                    />
                   </div>
                 )
               })}
@@ -310,33 +305,33 @@ export function FilterHub({ isOpen, onClose, onFilterUpdate, currentFilters, res
                {/* Gear type (Independent) */}
                <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 ml-1">Şanzıman</label>
-                  <Select value={currentFilters.gearType || ""} onValueChange={(val) => onFilterUpdate({ gearType: val === 'null' ? null : val })}>
-                    <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white">
-                      <SelectValue placeholder="Tümü" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest">
-                      <SelectItem value="null">Tümü</SelectItem>
-                      {standaloneOptions.sanziman?.map(opt => (
-                        <SelectItem key={opt.id} value={opt.name}>{opt.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <AdaptiveSelect
+                    value={currentFilters.gearType || ""}
+                    onValueChange={(val) => onFilterUpdate({ gearType: val === 'null' ? null : val })}
+                    placeholder="Tümü"
+                    triggerClassName="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white"
+                    contentClassName="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest"
+                    items={[
+                      { value: 'null', label: 'Tümü' },
+                      ...(standaloneOptions.sanziman?.map(opt => ({ value: opt.name, label: opt.name })) || [])
+                    ]}
+                  />
                </div>
 
                {/* Body type (Independent) */}
                <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 ml-1">Kasa Tipi</label>
-                  <Select value={currentFilters.bodyType || ""} onValueChange={(val) => onFilterUpdate({ bodyType: val === 'null' ? null : val })}>
-                    <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white">
-                      <SelectValue placeholder="Tümü" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest">
-                      <SelectItem value="null">Tümü</SelectItem>
-                      {standaloneOptions.kasa?.map(opt => (
-                        <SelectItem key={opt.id} value={opt.name}>{opt.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <AdaptiveSelect
+                    value={currentFilters.bodyType || ""}
+                    onValueChange={(val) => onFilterUpdate({ bodyType: val === 'null' ? null : val })}
+                    placeholder="Tümü"
+                    triggerClassName="h-14 bg-white/5 border-white/5 rounded-2xl font-black uppercase tracking-widest text-white"
+                    contentClassName="bg-slate-900 border-white/10 text-white font-black uppercase tracking-widest"
+                    items={[
+                      { value: 'null', label: 'Tümü' },
+                      ...(standaloneOptions.kasa?.map(opt => ({ value: opt.name, label: opt.name })) || [])
+                    ]}
+                  />
                </div>
             </div>
           </section>

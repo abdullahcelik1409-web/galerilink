@@ -63,10 +63,9 @@ export function CarCard({ car, showDelete = false, priority = false }: { car: an
           <Image 
             src={car.images[0]} 
             alt={`${car.brand} ${car.model}`}
-            width={400}
-            height={300}
+            fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700" 
+            className="object-cover group-hover:scale-105 transition-transform duration-700" 
             priority={priority}
             loading={priority ? undefined : "lazy"}
           />
