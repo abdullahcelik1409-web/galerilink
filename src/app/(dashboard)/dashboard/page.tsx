@@ -1,5 +1,4 @@
 import { Suspense } from "react"
-import { getAuthUser } from "@/lib/supabase/auth-cache"
 import { OpportunityFilterBar } from "@/components/cars/opportunity-filter-bar"
 import { OpportunityFeed, RegularFeed, ResultCount, FeedHeaderCount } from "./dashboard-feed"
 import { CarCardSkeleton } from "@/components/cars/car-card-skeleton"
@@ -15,12 +14,6 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const { user } = await getAuthUser()
-  
-  if (!user) return null
-
-  // Await the searchParams dynamically in Next 15 (if using newer Next) but Next.js 13/14 provides it directly. 
-  // Let's resolve safely
   const resolvedParams = await searchParams || {}
 
   return (
