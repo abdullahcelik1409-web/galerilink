@@ -10,51 +10,51 @@ export interface TaxonomyNode {
   logo_url?: string
 }
 
-const globalForTaxonomy = globalThis as unknown as {
-  taxonomyCache: Map<string, TaxonomyNode> | null;
-  taxonomyCacheTimestamp: number;
-}
+import { unstable_cache } from 'next/cache'
 
-const CACHE_TTL = 30 * 60 * 1000; // 30 mins
+// 1. Vercel Data Cache'den array çeken fonksiyon (24 Saat Önbellek)
+const fetchTaxonomyNodesCached = unstable_cache(
+  async () => {
+    const supabase = await createClient()
+    const allNodes: TaxonomyNode[] = []
+    let hasMore = true
+    let offset = 0
+    const limit = 1000
 
-export const getServerTaxonomyMap = cache(async (): Promise<Map<string, TaxonomyNode>> => {
-  const now = Date.now();
-  if (globalForTaxonomy.taxonomyCache && globalForTaxonomy.taxonomyCacheTimestamp && (now - globalForTaxonomy.taxonomyCacheTimestamp) < CACHE_TTL) {
-    return globalForTaxonomy.taxonomyCache;
-  }
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from('car_taxonomy')
+        .select('id, parent_id, name, level, slug, logo_url')
+        .eq('status', 'approved')
+        .range(offset, offset + limit - 1)
 
-  const supabase = await createClient()
-  const map = new Map<string, TaxonomyNode>()
-  let hasMore = true
-  let offset = 0
-  const limit = 1000
-
-  while (hasMore) {
-    const { data, error } = await supabase
-      .from('car_taxonomy')
-      .select('id, parent_id, name, level, slug, logo_url')
-      .eq('status', 'approved')
-      .range(offset, offset + limit - 1)
-
-    if (error) {
-      console.error('Server Taxonomy cache fetch error:', error)
-      return globalForTaxonomy.taxonomyCache || new Map<string, TaxonomyNode>()
-    }
-
-    if (data && data.length > 0) {
-      data.forEach((node: any) => map.set(node.id, node))
-      if (data.length < limit) {
-        hasMore = false
-      } else {
-        offset += limit
+      if (error) {
+        console.error('Server Taxonomy cache fetch error:', error)
+        break; // Return what we have so far
       }
-    } else {
-      hasMore = false
-    }
-  }
 
-  globalForTaxonomy.taxonomyCache = map;
-  globalForTaxonomy.taxonomyCacheTimestamp = Date.now();
+      if (data && data.length > 0) {
+        allNodes.push(...data)
+        if (data.length < limit) {
+          hasMore = false
+        } else {
+          offset += limit
+        }
+      } else {
+        hasMore = false
+      }
+    }
+    return allNodes
+  },
+  ['galerilink-taxonomy-nodes'],
+  { revalidate: 86400, tags: ['taxonomy'] } // 24 hours
+)
+
+// 2. React Request Cache ile Map'e çevrim (Sadece o anki render için)
+export const getServerTaxonomyMap = cache(async (): Promise<Map<string, TaxonomyNode>> => {
+  const nodes = await fetchTaxonomyNodesCached();
+  const map = new Map<string, TaxonomyNode>()
+  nodes.forEach(node => map.set(node.id, node))
   return map;
 });
 

@@ -8,6 +8,8 @@ export const metadata = {
   title: "Ağdaki Araçlar - GaleriLink",
 }
 
+export const revalidate = 60;
+
 export default async function DashboardPage({
   searchParams,
 }: {

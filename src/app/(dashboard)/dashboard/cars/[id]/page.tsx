@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server"
 import { CarDetailView } from "@/components/cars/car-detail-view"
 import { notFound } from "next/navigation"
 
+export const revalidate = 60;
+
 export default async function CarDetailPage({ params }: { params: { id: string } }) {
   const { id } = await params
   const supabase = await createClient()

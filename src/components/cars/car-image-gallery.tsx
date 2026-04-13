@@ -37,7 +37,7 @@ export function CarImageGallery({ images }: CarImageGalleryProps) {
           alt={`Car image ${currentIndex + 1}`}
           width={800}
           height={500}
-          sizes="(max-width: 1024px) 100vw, 66vw"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="w-full h-full object-cover transition-opacity duration-300"
           priority={currentIndex === 0}
         />
