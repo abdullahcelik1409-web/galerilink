@@ -3,7 +3,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useCustomerMode } from "@/components/providers/customer-mode-provider"
-import { Car, LayoutDashboard, Settings, PlusCircle, Flame, Banknote, MessageCircle } from "lucide-react"
+import { Car, LayoutDashboard, Settings, PlusCircle, Flame, Banknote, MessageCircle, FileStack } from "lucide-react"
 
 export function Sidebar({ className }: { className?: string }) {
   const pathname = usePathname()
@@ -31,7 +31,7 @@ export function Sidebar({ className }: { className?: string }) {
                   Benim İlanlarım
                 </Link>
                 <Link href="/dashboard/drafts" className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all", pathname === '/dashboard/drafts' ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50")}>
-                  <PlusCircle className="h-4 w-4" />
+                  <FileStack className="h-4 w-4" />
                   Taslaklar
                 </Link>
                 <Link href="/dashboard/offers" className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all", pathname === '/dashboard/offers' ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50")}>
