@@ -124,6 +124,47 @@ export default function SettingsPage() {
         {/* System & Actions Column */}
         <div className="space-y-8 flex flex-col">
           
+          {/* Chrome Extension Key */}
+          <div className="p-8 bg-card/80 backdrop-blur-sm border border-border/50 rounded-[2.5rem] relative overflow-hidden group/ext">
+             <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/ext:opacity-100 transition-opacity duration-700" />
+             <div className="relative z-10">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                    <Laptop className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-foreground uppercase tracking-tight">Chrome Uzantısı</h3>
+                    <p className="text-[10px] uppercase tracking-widest text-primary font-bold mt-0.5">Sahibinden Aktarıcı Anahtarı</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
+                    Sahibinden üzerinden ilanları tek tıkla taslak olarak aktarmak için aşağıdaki özel anahtarınızı uzantı ayarlarında kullanın.
+                  </p>
+                  
+                  <div className="flex items-center gap-2 p-4 bg-muted/40 rounded-2xl border border-border/50">
+                    <code className="flex-1 font-technical text-sm font-bold tracking-widest truncate select-all">{profile?.extension_key || 'Oluşturuluyor...'}</code>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(profile?.extension_key);
+                        alert("Anahtar kopyalandı!");
+                      }}
+                      className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-primary-foreground transition-all"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="pt-2">
+                    <p className="text-[9px] font-black text-muted-foreground/60 uppercase tracking-widest leading-relaxed">
+                      ⚠️ Bu anahtarı kimseyle paylaşmayın. Yeni bir ilan aktarıldığında doğrudan sizin galerinize tanımlanacaktır.
+                    </p>
+                  </div>
+                </div>
+             </div>
+          </div>
+
           {/* Theme Settings */}
           <div className="p-8 bg-card/80 backdrop-blur-sm border border-border/50 rounded-[2.5rem] flex-1">
             <div className="flex items-center gap-4 mb-8">

@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "Galerilink Taslak Aktarıcı",
+  "version": "1.0",
+  "description": "Sahibinden ilanlarını tek tıkla Galerilink taslaklarına aktarın.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "offscreen",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback"
+  ],
+  "host_permissions": [
+    "*://*.sahibinden.com/*",
+    "*://*.shbdn.com/*",
+    "https://xqivvgnzrikwcavcxjsi.supabase.co/*"
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.sahibinden.com/ilan/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "offscreen.html"
+      ],
+      "matches": [
+        "*://*.sahibinden.com/*"
+      ]
+    }
+  ]
+}

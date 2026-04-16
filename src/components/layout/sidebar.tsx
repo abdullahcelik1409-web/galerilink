@@ -30,6 +30,10 @@ export function Sidebar({ className }: { className?: string }) {
                   <Car className="h-4 w-4" />
                   Benim İlanlarım
                 </Link>
+                <Link href="/dashboard/drafts" className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all", pathname === '/dashboard/drafts' ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50")}>
+                  <PlusCircle className="h-4 w-4" />
+                  Taslaklar
+                </Link>
                 <Link href="/dashboard/offers" className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all", pathname === '/dashboard/offers' ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50")}>
                   <Banknote className="h-4 w-4" />
                   Teklifler

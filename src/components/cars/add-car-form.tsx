@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-optimization"
 import { TaxonomyColumnSelector } from "./taxonomy-column-selector"
 import { toast } from "sonner"
+import { useSearchParams } from "next/navigation"
+import { useEffect } from "react"
 
 interface ImageState {
   file: File;
@@ -182,6 +184,7 @@ export function AddCarForm() {
     handleSubmit,
     control,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<CarFormValues>({
     resolver: zodResolver(carSchema),
@@ -201,6 +204,89 @@ export function AddCarForm() {
       opportunity_expires_at: "48", // Default 48 hours as string duration
     },
   })
+
+  const searchParams = useSearchParams()
+  const draftId = searchParams.get('draftId')
+
+  // Load draft data if exists
+  useEffect(() => {
+    async function loadDraft() {
+      if (!draftId) return
+      
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from('cars_drafts')
+        .select('*')
+        .eq('id', draftId)
+        .eq('seller_id', user.id)
+        .single()
+
+      if (error) {
+        toast.error("Taslak verisi yüklenemedi.")
+        return
+      }
+
+      if (data) {
+        // City/District Matching Logic
+        let matchedCity = "";
+        let matchedDistrict = "";
+
+        if (data.location_city) {
+          // Find closest match in TURKEY_LOCATIONS
+          const draftCity = data.location_city.toUpperCase('tr-TR');
+          matchedCity = Object.keys(TURKEY_LOCATIONS).find(c => c === draftCity) || "";
+          
+          if (matchedCity && data.location_district) {
+            const draftDistrict = data.location_district.toUpperCase('tr-TR');
+            matchedDistrict = TURKEY_LOCATIONS[matchedCity].find(d => d === draftDistrict) || "";
+          }
+        }
+
+        // Reset form with draft data
+        reset({
+          title: data.title || "",
+          brand: data.brand || "",
+          model: data.model || "",
+          year: data.year?.toString() || new Date().getFullYear().toString(),
+          km: data.km?.toString() || "",
+          price_b2b: data.price?.replace(/[^0-9]/g, '') || "", // Clean price string
+          expertise: data.expertise || {},
+          location_city: matchedCity,
+          location_district: matchedDistrict,
+          damage_report: data.description || "", // Map scraper description to damage report (Ek Notlar)
+          is_opportunity: false,
+          manual_data: {
+            marka: data.brand || "",
+            model: data.model || "",
+            seri: data.series || "", 
+            motor: data.engine_size ? `${data.engine_size}${data.engine_power ? ' / ' + data.engine_power : ''}` : (data.engine_power || ""),
+            sanziman: data.transmission || "",
+            kasa: data.body_type || "",
+            paket: "", 
+          }
+        })
+
+        // Handle images
+        if (data.images && data.images.length > 0) {
+          const draftImages: ImageState[] = data.images.map((url: string) => ({
+            previewUrl: url,
+            isOptimizing: false,
+            isOptimized: true, // Already optimized by extension
+          }))
+          setCarImages(draftImages)
+        }
+
+        // Eğer teknik detaylar gelmişse manuel modu aç
+        if (!data.brand || !data.model || data.series) {
+           setIsManualMode(true)
+        }
+      }
+    }
+    loadDraft()
+  }, [draftId, reset])
 
   // Only watch city for district dropdown - isolated
   const selectedCity = useWatch({ control, name: "location_city" })
@@ -356,8 +442,16 @@ export function AddCarForm() {
 
       let imageUrls: string[] = []
       if (carImages.length > 0) {
-        const readyFiles = carImages.map(img => img.file)
-        imageUrls = await Promise.all(readyFiles.map(f => uploadToSupabase(f)))
+        imageUrls = await Promise.all(
+          carImages.map(async (img) => {
+            // Eğer dosya yerel ise (yeni eklenmişse) yükle
+            if (img.file) {
+              return await uploadToSupabase(img.file)
+            }
+            // Eğer zaten taslaktan gelen bir URL ise aynen koru
+            return img.previewUrl
+          })
+        )
       }
 
       const { error: dbError } = await supabase.from('cars').insert({
@@ -384,6 +478,13 @@ export function AddCarForm() {
       })
 
       if (dbError) throw dbError
+
+      // 5. Taslağı Sil (Varsa)
+      const supabaseFinal = createClient()
+      if (draftId) {
+        await supabaseFinal.from('cars_drafts').delete().eq('id', draftId)
+      }
+
       router.push("/dashboard/my-cars")
       router.refresh()
     } catch (err: any) {

@@ -1,0 +1,23 @@
+ [
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://www.sahibinden.com/"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "|https://*.shbdn.com/*",
+      "resourceTypes": [
+        "xmlhttprequest",
+        "other"
+      ]
+    }
+  }
+]

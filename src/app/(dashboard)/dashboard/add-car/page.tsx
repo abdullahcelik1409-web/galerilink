@@ -1,8 +1,6 @@
+"use client"
 import { AddCarForm } from "@/components/cars/add-car-form"
-
-export const metadata = {
-  title: "Yeni İlan Ekle - GaleriLink",
-}
+import { useSearchParams } from "next/navigation"
 
 export default function AddCarPage() {
   return (
