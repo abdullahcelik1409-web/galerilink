@@ -187,3 +187,59 @@ CREATE POLICY "Users can insert pending taxonomy" ON public.car_taxonomy
 
 CREATE POLICY "Users can update pending taxonomy" ON public.car_taxonomy
   FOR UPDATE TO authenticated USING (status = 'pending');
+
+-- =====================================
+-- B2B VERIFICATION & ACCESS CONTROL
+-- =====================================
+
+-- 1. Profiles tablosunu yeni akışa göre esnetme (Kayıt hatasını önlemek için)
+ALTER TABLE public.profiles ALTER COLUMN company_name DROP NOT NULL;
+ALTER TABLE public.profiles ALTER COLUMN tax_no DROP NOT NULL;
+ALTER TABLE public.profiles ALTER COLUMN city DROP NOT NULL;
+
+-- 2. Unique Constraints (Anti-fake Registration)
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.profiles ADD CONSTRAINT unique_galeri_adi UNIQUE (galeri_adi);
+ALTER TABLE public.profiles ADD CONSTRAINT unique_email UNIQUE (email);
+ALTER TABLE public.profiles ADD CONSTRAINT unique_phone UNIQUE (phone);
+ALTER TABLE public.profiles ADD CONSTRAINT unique_yetki_belge UNIQUE (yetki_belge_no);
+
+-- 3. Updated handle_new_user for frictionless B2B signup
+CREATE OR REPLACE FUNCTION public.handle_new_user() 
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (
+    id, 
+    ad_soyad,
+    galeri_adi,
+    phone,
+    email,
+    hesap_durumu
+  )
+  VALUES (
+    NEW.id, 
+    COALESCE(NEW.raw_user_meta_data->>'ad_soyad', ''),
+    COALESCE(NEW.raw_user_meta_data->>'galeri_adi', ''),
+    COALESCE(NEW.raw_user_meta_data->>'phone', ''),
+    NEW.email,
+    'beklemede'
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 4. Storage Bucket for Verifications
+-- INSERT INTO storage.buckets (id, name, public) VALUES ('verifications', 'verifications', false);
+
+-- Storage RLS: Users can only upload to their own folder, Admin can read everything
+-- CREATE POLICY "Users can upload their own docs" 
+-- ON storage.objects FOR INSERT 
+-- WITH CHECK (bucket_id = 'verifications' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+-- CREATE POLICY "Users can view own docs" 
+-- ON storage.objects FOR SELECT 
+-- USING (bucket_id = 'verifications' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+-- CREATE POLICY "Admin can view all verification docs" 
+-- ON storage.objects FOR SELECT 
+-- USING (bucket_id = 'verifications' AND auth.jwt()->>'email' = 'abdullah.celik1409@gmail.com');

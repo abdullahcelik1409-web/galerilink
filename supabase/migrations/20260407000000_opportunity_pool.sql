@@ -126,10 +126,16 @@ CREATE POLICY "Owners can view offers on their listings"
   ON public.offers FOR SELECT
   USING (auth.uid() = owner_id);
 
--- Sadece giriş yapmış kullanıcılar teklif ekleyebilsin
-CREATE POLICY "Authenticated users can insert offers"
+-- Sadece giriş yapmış VE ONAYLI kullanıcılar teklif ekleyebilsin
+CREATE POLICY "Approved users can insert offers"
   ON public.offers FOR INSERT
-  WITH CHECK (auth.uid() = bidder_id);
+  WITH CHECK (
+    auth.uid() = bidder_id AND
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND hesap_durumu = 'onaylandi'
+    )
+  );
 
 -- Araç sahibi teklifleri kabul/reddet edebilsin
 CREATE POLICY "Owners can update offer status"

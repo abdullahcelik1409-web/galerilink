@@ -23,8 +23,8 @@ export function ConversationsList({ activeConversation, onSelect }: { activeConv
         .select(`
           *,
           car:cars ( id, title, brand, model, year, images ),
-          buyer:profiles!buyer_id ( id, company_name ),
-          seller:profiles!seller_id ( id, company_name ),
+          buyer:profiles!buyer_id ( id, galeri_adi ),
+          seller:profiles!seller_id ( id, galeri_adi ),
           messages ( id, content, created_at, is_read, sender_id )
         `)
         .or(`buyer_id.eq.${user?.id},seller_id.eq.${user?.id}`)
@@ -93,7 +93,7 @@ export function ConversationsList({ activeConversation, onSelect }: { activeConv
                   <User className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <div className="font-bold text-sm tracking-tight">{otherParty?.company_name || 'Bilinmeyen Kullanıcı'}</div>
+                  <div className="font-bold text-sm tracking-tight">{otherParty?.galeri_adi || 'Bilinmeyen Kullanıcı'}</div>
                   <div className="text-[10px] font-black uppercase text-muted-foreground">{isBuyer ? 'Satıcı' : 'Alıcı'}</div>
                 </div>
               </div>

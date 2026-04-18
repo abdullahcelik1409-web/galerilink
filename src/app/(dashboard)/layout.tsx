@@ -26,9 +26,8 @@ export default async function DashboardLayout({
   const { profile } = await getProfile(user.id)
 
   if (profile) {
-    if (profile.status === 'pending_approval') {
-      redirect('/waiting-approval')
-    }
+    // Note: 'beklemede' users are no longer redirected to /waiting-approval.
+    // They are allowed to see the dashboard but with blurred content.
     
     const trialEndsAt = profile.trial_ends_at ? new Date(profile.trial_ends_at) : null
     if (profile.subscription_status === 'expired' || (trialEndsAt && trialEndsAt < new Date())) {

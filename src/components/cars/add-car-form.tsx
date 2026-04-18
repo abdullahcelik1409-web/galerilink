@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createClient } from "@/lib/supabase/client"
 import { formatLocation } from "@/lib/utils"
 import { TURKEY_LOCATIONS } from "@/lib/constants/locations"
-import { UploadCloud, ImagePlus, X, Type, Activity, Gauge, MapPin, Sparkles, CheckCircle2, Flame, Info, ChevronRight } from "lucide-react"
+import { UploadCloud, ImagePlus, X, Type, Activity, Gauge, MapPin, Sparkles, CheckCircle2, Flame, Info, ChevronRight, ShieldAlert, PlusCircle } from "lucide-react"
 import { ExpertiseSelector } from "./expertise-selector"
 import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-optimization"
@@ -21,6 +21,7 @@ import { TaxonomyColumnSelector } from "./taxonomy-column-selector"
 import { toast } from "sonner"
 import { useSearchParams } from "next/navigation"
 import { useEffect } from "react"
+import { VerificationModal } from "@/components/profile/verification-modal"
 
 interface ImageState {
   file: File;
@@ -166,7 +167,7 @@ function ProgressBar({ control }: { control: any }) {
   )
 }
 
-export function AddCarForm() {
+export function AddCarForm({ profile, currentListingCount }: { profile: any; currentListingCount: number }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -174,6 +175,25 @@ export function AddCarForm() {
   const [isManualMode, setIsManualMode] = useState(false)
   const [manualLevel, setManualLevel] = useState<string | null>(null)
   const [manualPath, setManualPath] = useState<any[]>([])
+
+  const isVerified = profile?.hesap_durumu === 'onaylandi'
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false)
+
+  // Subscription Limits Mapping
+  const limits = {
+    trial: 10,
+    lite: 15,
+    pro: 50,
+    enterprise: Infinity,
+    default: 10
+  }
+
+  const userStatus = profile?.subscription_status || 'trial'
+  const maxListings = (limits as any)[userStatus] || limits.default
+  const isLimitReached = currentListingCount >= maxListings
+
+  const searchParams = useSearchParams()
+  const draftId = searchParams.get('draftId')
 
   // Image states
   const [carImages, setCarImages] = useState<ImageState[]>([])
@@ -201,12 +221,39 @@ export function AddCarForm() {
       expertise: {},
       is_opportunity: false,
       opportunity_reason: "Nakit İhtiyacı",
-      opportunity_expires_at: "48", // Default 48 hours as string duration
+      opportunity_expires_at: "48",
     },
   })
 
-  const searchParams = useSearchParams()
-  const draftId = searchParams.get('draftId')
+  // Limit Check UI
+  if (isLimitReached) {
+    return (
+      <div className="max-w-2xl mx-auto py-20 px-6 text-center space-y-8 animate-in fade-in zoom-in duration-500">
+         <div className="w-24 h-24 rounded-[2.5rem] bg-amber-500/10 flex items-center justify-center mx-auto shadow-2xl shadow-amber-500/20">
+            <Flame className="w-12 h-12 text-amber-600 animate-pulse" />
+         </div>
+         <div className="space-y-4">
+            <h1 className="text-3xl font-black italic uppercase tracking-tighter">İLAN LİMİTİNE ULAŞILDI</h1>
+            <p className="text-sm font-semibold text-muted-foreground leading-relaxed">
+               Mevcut paketinizin izin verdiği maksimum ilan sayısına ulaştınız ({maxListings} İlan). 
+               Daha fazla ilan eklemek için paketinizi yükseltin veya eski ilanlarınızı pasife alın.
+            </p>
+         </div>
+         <div className="flex flex-col gap-3">
+            <Button 
+               asChild
+               className="h-16 rounded-2xl text-base font-black uppercase tracking-widest bg-primary text-primary-foreground shadow-lg shadow-primary/20 gap-3"
+            >
+               <Link href="/subscription">
+                  <Zap className="w-6 h-6" />
+                  ŞİMDİ PAKETİ YÜKSELT
+               </Link>
+            </Button>
+            <Button variant="ghost" onClick={() => router.back()} className="rounded-xl font-bold uppercase tracking-widest text-[10px]">Geri Dön</Button>
+         </div>
+      </div>
+    )
+  }
 
   // Load draft data if exists
   useEffect(() => {
@@ -345,6 +392,47 @@ export function AddCarForm() {
       return updated.filter((_, i) => i !== index)
     })
   }, [])
+
+  if (isVerified === false) {
+    return (
+      <div className="max-w-2xl mx-auto py-20 px-6 text-center space-y-8 animate-in fade-in zoom-in duration-500">
+         <div className="w-24 h-24 rounded-[2.5rem] bg-red-500/10 flex items-center justify-center mx-auto shadow-2xl shadow-red-500/20">
+            <ShieldAlert className="w-12 h-12 text-red-600 animate-pulse" />
+         </div>
+         <div className="space-y-4">
+            <h1 className="text-3xl font-black italic uppercase tracking-tighter">İLAN EKLEME KISITLANDI</h1>
+            <p className="text-sm font-semibold text-muted-foreground leading-relaxed">
+               B2B ağında ilan verebilmek için hesabınızın doğrulanmış olması gerekmektedir. 
+               Lütfen vergi levhanızı yükleyin ve onay sürecini başlatın.
+            </p>
+         </div>
+         <div className="flex flex-col gap-3">
+            <Button 
+               onClick={() => setIsVerificationModalOpen(true)}
+               className="h-16 rounded-2xl text-base font-black uppercase tracking-widest cta-button gap-3"
+            >
+               <PlusCircle className="w-6 h-6" />
+               HESABIMI ŞİMDİ DOĞRULA
+            </Button>
+            <Button variant="ghost" onClick={() => router.back()} className="rounded-xl font-bold uppercase tracking-widest text-[10px]">Geri Dön</Button>
+         </div>
+         
+         <VerificationModal 
+            isOpen={isVerificationModalOpen} 
+            onClose={() => setIsVerificationModalOpen(false)} 
+         />
+      </div>
+    )
+  }
+
+  if (isVerified === null) {
+      return (
+         <div className="py-40 flex items-center justify-center">
+            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+         </div>
+      )
+  }
+
 
   const uploadToSupabase = async (file: File) => {
     const supabase = createClient()
@@ -852,7 +940,10 @@ export function AddCarForm() {
             </div>
 
             {/* Opportunity Pool Toggle Section */}
-            <div className="bento-card p-6 rounded-[2.5rem] border-emerald-500/20 bg-emerald-500/5 space-y-6 relative overflow-hidden group/opt">
+            <div className={cn(
+              "bento-card p-6 rounded-[2.5rem] border-emerald-500/20 bg-emerald-500/5 space-y-6 relative overflow-hidden group/opt",
+              userStatus === 'lite' && "opacity-50 grayscale pointer-events-none"
+            )}>
                <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)] group-hover/opt:scale-110 transition-transform">
@@ -860,30 +951,38 @@ export function AddCarForm() {
                      </div>
                      <div>
                         <h3 className="text-base font-black uppercase tracking-tight text-foreground dark:text-white">Fırsat Havuzuna Ekle</h3>
-                        <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest leading-relaxed">İlanınız vitrinin en üstünde ve özel premium kategorisinde görünür.</p>
+                        <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest leading-relaxed">
+                          {userStatus === 'lite' 
+                            ? "BU ÖZELLİK LITE PAKETTE KISITLIDIR" 
+                            : "İlanınız vitrinin en üstünde ve özel premium kategorisinde görünür."}
+                        </p>
                      </div>
                   </div>
-                  <Controller
-                    name="is_opportunity"
-                    control={control}
-                    render={({ field }) => (
-                      <button
-                        type="button"
-                        onClick={() => field.onChange(!field.value)}
-                        className={cn(
-                          "relative inline-flex h-9 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-emerald-500/10",
-                          field.value ? "bg-emerald-500" : "bg-muted shadow-inner"
-                        )}
-                      >
-                        <span
+                  {userStatus === 'lite' ? (
+                     <Link href="/subscription" className="bg-primary text-white text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-xl hover:scale-105 transition-all">PAKETİ YÜKSELT</Link>
+                  ) : (
+                    <Controller
+                      name="is_opportunity"
+                      control={control}
+                      render={({ field }) => (
+                        <button
+                          type="button"
+                          onClick={() => field.onChange(!field.value)}
                           className={cn(
-                            "pointer-events-none inline-block h-8 w-8 transform rounded-full bg-white shadow-xl ring-0 transition-transform duration-300 ease-in-out",
-                            field.value ? "translate-x-7" : "translate-x-0"
+                            "relative inline-flex h-9 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-emerald-500/10",
+                            field.value ? "bg-emerald-500" : "bg-muted shadow-inner"
                           )}
-                        />
-                      </button>
-                    )}
-                  />
+                        >
+                          <span
+                            className={cn(
+                              "pointer-events-none inline-block h-8 w-8 transform rounded-full bg-white shadow-xl ring-0 transition-transform duration-300 ease-in-out",
+                              field.value ? "translate-x-7" : "translate-x-0"
+                            )}
+                          />
+                        </button>
+                      )}
+                    />
+                  )}
                </div>
 
                <Controller

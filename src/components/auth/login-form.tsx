@@ -29,7 +29,11 @@ export function LoginForm() {
     })
 
     if (error) {
-      setError(error.message)
+      if (error.message.includes("Invalid login credentials")) {
+        setError("E-posta adresi veya şifre hatalı.")
+      } else {
+        setError(error.message)
+      }
       setLoading(false)
       return
     }
@@ -54,7 +58,7 @@ export function LoginForm() {
               <Input 
                 id="email" 
                 type="email" 
-                placeholder="ornek@galeri.com" 
+                placeholder="ornek@domain.com" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required 

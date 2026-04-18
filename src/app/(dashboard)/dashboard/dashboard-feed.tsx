@@ -4,6 +4,7 @@ import { CarCard } from "@/components/cars/car-card"
 import { X, Flame, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { getAuthUser, getProfile } from "@/lib/supabase/auth-cache"
 
 export async function ResultCount({ searchParams }: { searchParams: any }) {
   const cars = await fetchAndFilterCars(searchParams, null, false)
@@ -22,6 +23,11 @@ export async function FeedHeaderCount({ searchParams }: { searchParams: any }) {
 export async function OpportunityFeed({ searchParams }: { searchParams: any }) {
   const cars = await fetchAndFilterCars(searchParams, true, true)
   if (cars.length === 0) return null
+
+  // Get current user profile for verification check
+  const { user } = await getAuthUser()
+  const { profile } = user ? await getProfile(user.id) : { profile: null }
+  const isVerified = profile?.hesap_durumu === 'onaylandi'
 
   // Fırsat Havuzu için sayfalama değil ilk 4 aracı gösteriyoruz
   const displayCars = cars.slice(0, 4)
@@ -47,7 +53,7 @@ export async function OpportunityFeed({ searchParams }: { searchParams: any }) {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         {displayCars.map((car: any, index: number) => (
-          <CarCard key={car.id} car={car} priority={index < 4} />
+          <CarCard key={car.id} car={car} priority={index < 4} isVerified={isVerified} />
         ))}
       </div>
     </div>
@@ -58,13 +64,16 @@ export async function RegularFeed({ searchParams }: { searchParams: any }) {
   const limitPerPage = 24
   const page = searchParams.page ? parseInt(searchParams.page as string) : 1
   
-  // Burada is_opportunity = false diye süzdürmüyoruz, vitrin tümünü kapsayabilir veya sadece normal olabilir.
-  // Eski kodda regularCars, expire tarihi geçik veya is_opportunity olmayanlarmış.
   const allFilteredCars = await fetchAndFilterCars(searchParams, false, false)
   const total = allFilteredCars.length
   const totalPages = Math.ceil(total / limitPerPage)
   
   const displayCars = allFilteredCars.slice((page - 1) * limitPerPage, page * limitPerPage)
+
+  // Get current user profile for verification check
+  const { user } = await getAuthUser()
+  const { profile } = user ? await getProfile(user.id) : { profile: null }
+  const isVerified = profile?.hesap_durumu === 'onaylandi'
 
   return (
     <div className="space-y-6">
@@ -74,7 +83,7 @@ export async function RegularFeed({ searchParams }: { searchParams: any }) {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         {displayCars.map((car: any, index: number) => (
-          <CarCard key={car.id} car={car} priority={index < 4} />
+          <CarCard key={car.id} car={car} priority={index < 4} isVerified={isVerified} />
         ))}
         
         {displayCars.length === 0 && (
@@ -82,7 +91,7 @@ export async function RegularFeed({ searchParams }: { searchParams: any }) {
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-6">
               <X className="w-8 h-8 opacity-20" />
             </div>
-            <span className="text-xl font-black uppercase tracking-tighter mb-2 italic">Sonuç Bulunamadı</span>
+            <span className="text-xl font-black uppercase tracking-tighter mb-2 italic">Sonu sonuç Bulunamadı</span>
             <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Filtrelerinize uygun araç kalmadı.</span>
             <Link href="?page=1">
               <Button variant="ghost" className="mt-8 text-[10px] font-black uppercase tracking-widest">Aramayı Sıfırla</Button>
@@ -109,7 +118,7 @@ async function fetchAndFilterCars(searchParams: any, forceOpportunity: boolean |
     id, seller_id, title, brand, model, year, km, price_b2b, images,
     location_city, location_district, is_opportunity, opportunity_expires_at,
     opportunity_reason, package_id, is_active, created_at, masked_slug, damage_report,
-    profiles:seller_id ( company_name, city, district, phone )
+    profiles:seller_id ( galeri_adi, city, district, phone )
   `).eq('is_active', true)
 
   if (searchParams.minPrice) query = query.gte('price_b2b', searchParams.minPrice)

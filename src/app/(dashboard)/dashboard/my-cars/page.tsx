@@ -16,7 +16,7 @@ export default async function MyCarsPage() {
   // Fetch cars owned by currentUser
   const { data: cars } = await supabase
     .from('cars')
-    .select(`*, profiles:seller_id (company_name, city, phone)`)
+    .select(`*, profiles:seller_id (galeri_adi, city, phone)`)
     .eq('seller_id', user.id)
     .neq('status', 'sold')
     .order('created_at', { ascending: false })

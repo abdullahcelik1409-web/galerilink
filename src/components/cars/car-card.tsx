@@ -15,11 +15,23 @@ import { OpportunityBadge } from "./opportunity-badge"
 const DeleteCarModal = dynamic(() => import("./delete-car-modal").then(m => ({ default: m.DeleteCarModal })), { ssr: false })
 const OfferModal = dynamic(() => import("./offer-modal").then(m => ({ default: m.OfferModal })), { ssr: false })
 
-export function CarCard({ car, showDelete = false, priority = false }: { car: any; showDelete?: boolean; priority?: boolean }) {
+export function CarCard({ 
+  car, 
+  showDelete = false, 
+  priority = false,
+  isVerified = true 
+}: { 
+  car: any; 
+  showDelete?: boolean; 
+  priority?: boolean;
+  isVerified?: boolean;
+}) {
   const { isCustomerMode } = useCustomerMode()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [offerOpen, setOfferOpen] = useState(false)
+
+  const isOwner = false // CarCard usually doesn't know this unless passed, but let's assume it's not owner for feed
 
   const isOpportunity = car.is_opportunity && car.opportunity_expires_at
 
@@ -51,6 +63,8 @@ export function CarCard({ car, showDelete = false, priority = false }: { car: an
   const locationText = car.location_district && car.location_city 
     ? `${car.location_district}, ${car.location_city}` 
     : (car.location_city || car.profiles?.city || "Belirsiz")
+
+  const blurClass = (!isVerified && !isOwner) ? "blur-md select-none pointer-events-none opacity-50 font-black italic tracking-widest" : ""
 
   const cardContent = (
     <Card className={cn(
@@ -133,15 +147,19 @@ export function CarCard({ car, showDelete = false, priority = false }: { car: an
                <div className="relative z-10 flex items-center justify-between gap-4">
                   <div className="space-y-0.5">
                      <span className="text-[8px] font-black text-muted-foreground dark:text-white/30 uppercase tracking-widest block">B2B Ağ Fiyatı</span>
-                     <p className="font-technical text-lg font-black text-foreground dark:text-white tracking-tighter leading-none">{formattedPrice}</p>
+                     <p className={cn("font-technical text-lg font-black text-foreground dark:text-white tracking-tighter leading-none transition-all duration-500", blurClass)}>{formattedPrice}</p>
                   </div>
                   <button 
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      if (!isVerified && !isOwner) return; // Prevent action
                       window.location.href = `tel:${car.profiles?.phone}`;
                     }}
-                    className="w-10 h-10 rounded-xl bg-primary/10 dark:bg-white/10 hover:bg-primary dark:hover:bg-white text-primary dark:text-white hover:text-white dark:hover:text-primary transition-all flex items-center justify-center shadow-lg border border-primary/10 dark:border-white/10"
+                    className={cn(
+                      "w-10 h-10 rounded-xl bg-primary/10 dark:bg-white/10 hover:bg-primary dark:hover:bg-white text-primary dark:text-white hover:text-white dark:hover:text-primary transition-all flex items-center justify-center shadow-lg border border-primary/10 dark:border-white/10",
+                      blurClass
+                    )}
                   >
                      <Phone className="w-4 h-4" />
                   </button>
@@ -162,8 +180,16 @@ export function CarCard({ car, showDelete = false, priority = false }: { car: an
           {/* Opportunity Quick Offer Button */}
           {isOpportunity && !isCustomerMode && (
             <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOfferOpen(true); }}
-              className="w-full flex items-center justify-center gap-2 bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] py-3.5 transition-all border-t border-[#D4AF37]/20 font-black text-[10px] uppercase tracking-[0.2em]"
+              onClick={(e) => { 
+                e.preventDefault(); 
+                e.stopPropagation(); 
+                if (!isVerified && !isOwner) return;
+                setOfferOpen(true); 
+              }}
+              className={cn(
+                "w-full flex items-center justify-center gap-2 bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] py-3.5 transition-all border-t border-[#D4AF37]/20 font-black text-[10px] uppercase tracking-[0.2em]",
+                blurClass
+              )}
             >
                <Banknote className="w-4 h-4" />
                Hızlı Nakit Teklif Ver
@@ -177,8 +203,8 @@ export function CarCard({ car, showDelete = false, priority = false }: { car: an
                   <div className="w-6 h-6 rounded-md bg-white border border-primary/5 flex items-center justify-center text-primary shrink-0">
                      <Store className="w-3 h-3" />
                   </div>
-                  <span className="text-[10px] font-bold text-muted-foreground truncate uppercase tracking-tight">
-                     {car.profiles.company_name}
+                  <span className={cn("text-[10px] font-bold text-muted-foreground truncate uppercase tracking-tight", blurClass)}>
+                     {car.profiles.galeri_adi}
                   </span>
                </div>
                <div className="shrink-0 flex items-center">

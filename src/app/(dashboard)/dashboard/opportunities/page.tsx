@@ -22,7 +22,7 @@ export default async function OpportunitiesPage() {
       location_city, location_district, is_opportunity, opportunity_expires_at,
       opportunity_reason, package_id, is_active, created_at, masked_slug,
       profiles:seller_id (
-        company_name,
+        galeri_adi,
         city,
         district,
         phone

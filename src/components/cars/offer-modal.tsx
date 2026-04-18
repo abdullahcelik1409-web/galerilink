@@ -36,6 +36,18 @@ export function OfferModal({ listingId, ownerId, carTitle, isOpen, onClose }: Of
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Oturum bulunamadı.")
 
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('hesap_durumu')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.hesap_durumu !== 'onaylandi') {
+        setError("Teklif verebilmek için hesabınızın doğrulanması gerekmektedir.")
+        setLoading(false)
+        return
+      }
+
       if (user.id === ownerId) {
         setError("Kendi ilanınıza teklif veremezsiniz.")
         setLoading(false)

@@ -143,7 +143,7 @@ export function ChatBox({ conversation }: { conversation: any }) {
             <User className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <div className="font-bold text-sm tracking-tight">{otherParty?.company_name || 'Bilinmeyen Kullanıcı'}</div>
+            <div className="font-bold text-sm tracking-tight">{otherParty?.galeri_adi || 'Bilinmeyen Kullanıcı'}</div>
             <div className="text-[10px] text-muted-foreground font-medium flex items-center gap-2">
               <span>{isBuyer ? 'Satıcı' : 'Alıcı'}</span>
               <span className="w-1 h-1 rounded-full bg-border" />

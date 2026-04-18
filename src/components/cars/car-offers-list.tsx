@@ -18,7 +18,7 @@ interface Offer {
   created_at: string
   bidder_id: string
   bidder: {
-    company_name: string
+    galeri_adi: string
     city: string
   }
 }
@@ -43,7 +43,7 @@ export function CarOffersList({ listingId, isOwner }: { listingId: string; isOwn
         created_at,
         bidder_id,
         bidder:profiles!offers_bidder_id_fkey (
-          company_name,
+          galeri_adi,
           city,
           phone
         )
@@ -64,7 +64,7 @@ export function CarOffersList({ listingId, isOwner }: { listingId: string; isOwn
       setOffers(data?.map((o: any) => ({
         ...o,
         bidder: {
-          company_name: o.bidder?.company_name || 'B2B Galeri',
+          galeri_adi: o.bidder?.galeri_adi || 'B2B Galeri',
           city: o.bidder?.city || 'Belirsiz',
           phone: o.bidder?.phone
         }
@@ -165,7 +165,7 @@ export function CarOffersList({ listingId, isOwner }: { listingId: string; isOwn
                   </div>
                   <div>
                      <h4 className="text-base font-black uppercase tracking-tight text-white group-hover:text-[#D4AF37] transition-colors">
-                       {offer.bidder.company_name}
+                       {offer.bidder.galeri_adi}
                      </h4>
                      <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
                        <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {new Date(offer.created_at).toLocaleDateString('tr-TR')}</span>

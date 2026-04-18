@@ -14,15 +14,18 @@ import { OpportunityBadge } from "./opportunity-badge"
 import { OfferModal } from "./offer-modal"
 import { CarOffersList } from "./car-offers-list"
 import { useState } from "react"
+import { VerificationModal } from "@/components/profile/verification-modal"
 
 interface CarDetailViewProps {
   car: any
   isOwner?: boolean
+  isVerified?: boolean
 }
 
-export function CarDetailView({ car, isOwner }: CarDetailViewProps) {
+export function CarDetailView({ car, isOwner, isVerified = true }: CarDetailViewProps) {
   const { isCustomerMode } = useCustomerMode()
   const [offerOpen, setOfferOpen] = useState(false)
+  const [verificationOpen, setVerificationOpen] = useState(false)
 
   const isOpportunity = car.is_opportunity && car.opportunity_expires_at
 
@@ -32,6 +35,8 @@ export function CarDetailView({ car, isOwner }: CarDetailViewProps) {
     maximumFractionDigits: 0 
   }).format(car.price_b2b)
 
+  const blurClass = (!isVerified && !isOwner) ? "blur-xl select-none pointer-events-none opacity-50 font-black italic tracking-widest" : ""
+
   const PricingSection = () => (
     !isCustomerMode ? (
       <div className="bento-card p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] bg-slate-50 dark:bg-slate-950 text-foreground dark:text-white border-none shadow-2xl relative overflow-hidden group transition-all duration-500">
@@ -39,7 +44,9 @@ export function CarDetailView({ car, isOwner }: CarDetailViewProps) {
          <div className="relative z-10 space-y-6 md:space-y-8">
             <div>
               <span className="text-[10px] font-black text-muted-foreground dark:text-white/40 uppercase tracking-[0.3em] block mb-2">Ağ İçi B2B Fiyatı</span>
-              <p className="font-technical text-4xl sm:text-5xl md:text-6xl font-black text-foreground dark:text-white tracking-tighter leading-none">{formattedPrice}</p>
+              <p className={cn("font-technical text-4xl sm:text-5xl md:text-6xl font-black text-foreground dark:text-white tracking-tighter leading-none transition-all duration-700", blurClass)}>
+                {formattedPrice}
+              </p>
               
               {/* Trust Badges */}
               <div className="flex flex-wrap gap-2 mt-4 md:mt-6">
@@ -55,27 +62,43 @@ export function CarDetailView({ car, isOwner }: CarDetailViewProps) {
             </div>
 
             <div className="space-y-4">
-               <Button className="w-full h-14 md:h-16 rounded-2xl text-base md:text-lg font-black uppercase tracking-widest cta-button gap-3" asChild>
-                  <a href={`tel:${car.profiles?.phone}`}>
-                    <Phone className="w-6 h-6" />
-                    Hemen Ara
-                  </a>
-               </Button>
-               {!isOwner && (
-                 <Button variant="secondary" className="w-full h-14 md:h-16 rounded-2xl text-base md:text-lg font-black uppercase tracking-widest gap-3 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors" asChild>
-                    <Link href={`/messages?car=${car.id}&seller=${car.seller_id}`}>
-                      <MessageCircle className="w-6 h-6" />
-                      Mesaj Gönder
-                    </Link>
-                 </Button>
+               {(!isVerified && !isOwner) ? (
+                  <Button 
+                    onClick={() => setVerificationOpen(true)}
+                    className="w-full h-16 rounded-2xl text-[13px] md:text-sm font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center gap-2 shadow-2xl shadow-primary/40 transition-all active:scale-95 px-4"
+                  >
+                     <ShieldCheck className="w-5 h-5 shrink-0" />
+                     <span className="truncate">BİLGİLERİ GÖRMEK İÇİN DOĞRULA</span>
+                  </Button>
+               ) : (
+                 <>
+                   <Button className="w-full h-14 md:h-16 rounded-2xl text-base md:text-lg font-black uppercase tracking-widest cta-button gap-3" asChild>
+                      <a href={`tel:${car.profiles?.phone}`}>
+                        <Phone className="w-6 h-6" />
+                        Hemen Ara
+                      </a>
+                   </Button>
+                   {!isOwner && (
+                     <Button variant="secondary" className="w-full h-14 md:h-16 rounded-2xl text-base md:text-lg font-black uppercase tracking-widest gap-3 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors" asChild>
+                        <Link href={`/messages?car=${car.id}&seller=${car.seller_id}`}>
+                          <MessageCircle className="w-6 h-6" />
+                          Mesaj Gönder
+                        </Link>
+                     </Button>
+                   )}
+                 </>
                )}
+               
                <p className="text-[10px] text-center font-bold text-muted-foreground dark:text-white/30 uppercase tracking-widest leading-relaxed mt-2">İlan sahibine anında ulaşın.</p>
 
                {/* Opportunity Offer Button */}
                {isOpportunity && !isOwner && (
                  <button
-                   onClick={() => setOfferOpen(true)}
-                   className="w-full h-12 md:h-14 rounded-2xl bg-[#D4AF37] text-black text-sm md:text-base font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all hover:brightness-110 active:scale-95 mt-2 shadow-[0_10px_30px_-5px_rgba(212,175,55,0.4)]"
+                   onClick={() => isVerified || isOwner ? setOfferOpen(true) : setVerificationOpen(true)}
+                   className={cn(
+                     "w-full h-12 md:h-14 rounded-2xl bg-[#D4AF37] text-black text-sm md:text-base font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all hover:brightness-110 active:scale-95 mt-2 shadow-[0_10px_30px_-5px_rgba(212,175,55,0.4)]",
+                     blurClass
+                   )}
                  >
                    <Banknote className="w-5 h-5" />
                    Hızlı Nakit Teklif Ver
@@ -177,7 +200,7 @@ export function CarDetailView({ car, isOwner }: CarDetailViewProps) {
                   </div>
                   <div>
                     <span className="text-[9px] md:text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-1">Konum</span>
-                    <span className="text-sm md:text-base font-extrabold text-primary uppercase tracking-tight truncate block">{isCustomerMode ? "Gizli" : car.location_city}</span>
+                    <span className={cn("text-sm md:text-base font-extrabold text-primary uppercase tracking-tight truncate block", blurClass)}>{isCustomerMode ? "Gizli" : car.location_city}</span>
                   </div>
                </div>
 
@@ -242,11 +265,11 @@ export function CarDetailView({ car, isOwner }: CarDetailViewProps) {
                       <Store className="w-7 h-7 text-primary" />
                    </div>
                    <div className="flex flex-col flex-1 min-w-0">
-                      <h3 className="font-black text-xl truncate tracking-tight text-primary">{car.profiles.company_name}</h3>
+                      <h3 className={cn("font-black text-xl truncate tracking-tight text-primary", blurClass)}>{car.profiles.galeri_adi}</h3>
                       {!isCustomerMode && (
                          <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-black uppercase tracking-widest">
                             <MapPin className="w-3 h-3" />
-                            <span className="truncate">{car.profiles.district}, {car.profiles.city}</span>
+                            <span className={cn("truncate", blurClass)}>{car.profiles.district}, {car.profiles.city}</span>
                          </div>
                       )}
                    </div>
@@ -274,6 +297,12 @@ export function CarDetailView({ car, isOwner }: CarDetailViewProps) {
         setOfferOpen(false)
         window.scrollTo({ top: 0, behavior: 'smooth' })
       }}
+    />
+
+    {/* Verification Modal */}
+    <VerificationModal 
+      isOpen={verificationOpen}
+      onClose={() => setVerificationOpen(false)}
     />
     </>
   )

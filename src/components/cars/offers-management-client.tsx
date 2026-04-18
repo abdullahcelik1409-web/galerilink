@@ -45,12 +45,12 @@ interface Offer {
     price_b2b: number
   }
   bidder?: {
-    company_name: string
+    galeri_adi: string
     city: string
     phone?: string
   }
   owner?: {
-    company_name: string
+    galeri_adi: string
     city: string
     phone?: string
   }
@@ -79,12 +79,12 @@ export function OffersManagementClient({ userId }: { userId: string }) {
           price_b2b
         ),
         bidder:profiles!offers_bidder_id_fkey (
-          company_name,
+          galeri_adi,
           city,
           phone
         ),
         owner:profiles!offers_owner_id_fkey (
-          company_name,
+          galeri_adi,
           city,
           phone
         )
@@ -176,8 +176,8 @@ export function OffersManagementClient({ userId }: { userId: string }) {
     const s = searchQuery.toLowerCase()
     return offers.filter(o => 
       o.car.title.toLowerCase().includes(s) || 
-      (o.bidder?.company_name || "").toLowerCase().includes(s) ||
-      (o.owner?.company_name || "").toLowerCase().includes(s)
+      (o.bidder?.galeri_adi || "").toLowerCase().includes(s) ||
+      (o.owner?.galeri_adi || "").toLowerCase().includes(s)
     )
   }, [offers, searchQuery])
 
@@ -298,7 +298,7 @@ export function OffersManagementClient({ userId }: { userId: string }) {
                               <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
                                 <ArrowDownLeft className="w-3.5 h-3.5" />
                               </div>
-                              <span className="text-xs font-black text-white">{offer.bidder?.company_name}</span>
+                              <span className="text-xs font-black text-white">{offer.bidder?.galeri_adi}</span>
                               <span className="w-1 h-1 rounded-full bg-white/20" />
                               <span className="text-[10px] font-bold text-muted-foreground">{offer.bidder?.city || 'Şehir Yok'}</span>
                             </>
@@ -307,7 +307,7 @@ export function OffersManagementClient({ userId }: { userId: string }) {
                               <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
                                 <ArrowUpRight className="w-3.5 h-3.5" />
                               </div>
-                              <span className="text-xs font-black text-white">{offer.owner?.company_name}</span>
+                              <span className="text-xs font-black text-white">{offer.owner?.galeri_adi}</span>
                               <span className="w-1 h-1 rounded-full bg-white/20" />
                               <span className="text-[10px] font-bold text-muted-foreground">{offer.owner?.city || 'Şehir Yok'}</span>
                             </>

@@ -8,12 +8,16 @@ import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { ShieldAlert, ShieldCheck, LogOut, Menu, X, Car, LayoutDashboard, Settings, PlusCircle, Flame, Banknote, MessageCircle, FileStack } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { VerificationModal } from "@/components/profile/verification-modal"
 
 export function Header({ profile }: { profile: any }) {
   const { isCustomerMode, toggleCustomerMode } = useCustomerMode()
   const router = useRouter()
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isVerificationOpen, setIsVerificationOpen] = useState(false)
+
+  const isVerified = profile?.hesap_durumu === 'onaylandi'
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -32,24 +36,39 @@ export function Header({ profile }: { profile: any }) {
             </Button>
           </div>
 
-          {/* Customer Mode Indicator */}
-          <div className={`flex items-center gap-3 px-3 md:px-4 py-1.5 md:py-2 rounded-full border transition-all ${
-            isCustomerMode ? "bg-amber-500/10 border-amber-500/50 text-amber-600" : "bg-card border-border shadow-sm"
-          }`}>
-            {isCustomerMode ? <ShieldAlert className="w-4 h-4 md:w-5 md:h-5 text-amber-500" /> : <ShieldCheck className="w-4 h-4 md:w-5 md:h-5 text-primary" />}
-            <div className="hidden sm:flex flex-col">
-              <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider">{isCustomerMode ? 'Müşteri Modu Aktif' : 'Galerici Modu'}</span>
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Customer Mode Indicator */}
+            <div className={`flex items-center gap-3 px-3 md:px-4 py-1.5 md:py-2 rounded-full border transition-all ${
+              isCustomerMode ? "bg-amber-500/10 border-amber-500/50 text-amber-600" : "bg-card border-border shadow-sm"
+            }`}>
+              {isCustomerMode ? <ShieldAlert className="w-4 h-4 md:w-5 md:h-5 text-amber-500" /> : <ShieldCheck className="w-4 h-4 md:w-5 md:h-5 text-primary" />}
+              <div className="hidden sm:flex flex-col">
+                <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider">{isCustomerMode ? 'Müşteri Modu Aktif' : 'Galerici Modu'}</span>
+              </div>
+              <div className="ml-1 md:ml-2 flex items-center">
+                <Switch id="customer-mode" checked={isCustomerMode} onCheckedChange={toggleCustomerMode} />
+              </div>
             </div>
-            <div className="ml-1 md:ml-2 flex items-center">
-              <Switch id="customer-mode" checked={isCustomerMode} onCheckedChange={toggleCustomerMode} />
-            </div>
+
+            {/* Verification Status Badge (Desktop only or prominent) */}
+            {!isCustomerMode && !isVerified && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsVerificationOpen(true)}
+                className="hidden sm:flex rounded-full bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/20 font-black text-[9px] uppercase tracking-widest gap-2 animate-pulse"
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                Hesabı Doğrula
+              </Button>
+            )}
           </div>
 
           <div className="flex items-center gap-2 md:gap-4 overflow-hidden">
             {!isCustomerMode && (
               <div className="text-right hidden sm:flex flex-col truncate">
-                <span className="text-sm font-semibold truncate max-w-[120px] lg:max-w-[200px]">{profile?.company_name}</span>
-                <span className="text-xs text-muted-foreground truncate">{profile?.city}</span>
+                <span className="text-sm font-semibold truncate max-w-[120px] lg:max-w-[200px]">{profile?.galeri_adi}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground truncate">{profile?.city || profile?.location_city}</span>
               </div>
             )}
             <div className="h-8 w-px bg-border hidden sm:block mx-1" />
@@ -60,6 +79,12 @@ export function Header({ profile }: { profile: any }) {
           </div>
         </div>
       </header>
+
+      {/* Verification Modal Integration */}
+      <VerificationModal 
+        isOpen={isVerificationOpen} 
+        onClose={() => setIsVerificationOpen(false)} 
+      />
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
@@ -78,6 +103,23 @@ export function Header({ profile }: { profile: any }) {
             </div>
             
             <div className="space-y-4 py-4 flex-1 px-3 mt-2">
+              {/* Mobile Verification Warning */}
+              {!isCustomerMode && !isVerified && (
+                <div className="px-3 pb-4">
+                   <Button 
+                    variant="outline" 
+                    className="w-full justify-start rounded-2xl bg-red-500/10 text-red-600 border-red-500/20 font-black text-[10px] uppercase tracking-widest gap-3 h-12"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false)
+                      setIsVerificationOpen(true)
+                    }}
+                  >
+                    <ShieldAlert className="w-5 h-5" />
+                    Hemen Hesabı Doğrula
+                  </Button>
+                </div>
+              )}
+
               <div className="space-y-1">
                 <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all", pathname === '/dashboard' ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50")}>
                   <LayoutDashboard className="h-4 w-4" />
