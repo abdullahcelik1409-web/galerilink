@@ -2,6 +2,7 @@
 
 import { useState, useRef, useMemo, useCallback, memo } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useForm, Controller, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -13,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createClient } from "@/lib/supabase/client"
 import { formatLocation } from "@/lib/utils"
 import { TURKEY_LOCATIONS } from "@/lib/constants/locations"
-import { UploadCloud, ImagePlus, X, Type, Activity, Gauge, MapPin, Sparkles, CheckCircle2, Flame, Info, ChevronRight, ShieldAlert, PlusCircle } from "lucide-react"
+import { UploadCloud, ImagePlus, X, Type, Activity, Gauge, MapPin, Sparkles, CheckCircle2, Flame, Info, ChevronRight, ShieldAlert, PlusCircle, Zap } from "lucide-react"
 import { ExpertiseSelector } from "./expertise-selector"
 import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-optimization"
