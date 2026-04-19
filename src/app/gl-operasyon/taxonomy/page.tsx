@@ -45,7 +45,7 @@ export default async function TaxonomyPage() {
   return (
     <div className="min-h-screen bg-black text-white selection:bg-primary/40 relative font-sans overflow-x-hidden">
       {/* Background Effects */}
-      <div className="fixed inset-0 bg-[url('/noise.png')] opacity-[0.05] pointer-events-none" />
+      <div className="fixed inset-0 bg-black opacity-100 pointer-events-none" />
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
 
       <div className="relative z-10 p-6 md:p-12 max-w-[1400px] mx-auto space-y-12 pb-32">

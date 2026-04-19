@@ -17,12 +17,13 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
@@ -85,19 +86,30 @@ export function TaxonomyStudio() {
     }
   }
 
-  async function handleAddNode() {
+   async function handleAddNode() {
+    console.log("handleAddNode tetiklendi. Mod:", isBulkMode ? "Toplu" : "Tekli")
+    
     if (isBulkMode) {
+      console.log("Toplu veri:", bulkData)
       const names = bulkData.split('\n').map(n => n.trim()).filter(n => n.length > 0)
-      if (names.length === 0) return
+      console.log("Ayıklanan isimler:", names)
+      
+      if (names.length === 0) {
+        console.warn("Liste boş, işlem durduruldu.")
+        return
+      }
       
       setActionLoading(true)
       try {
+        console.log("bulkAddNodes çağrılıyor...")
         const result = await bulkAddNodes(names, currentLevel, currentParentId)
-        toast.success(`${names.length} öğe işlendi (Yeni eklenen veya zaten var olan).`)
+        console.log("İşlem sonucu:", result)
+        toast.success(`${names.length} öğe işlendi.`)
         setBulkData("")
         setIsAddModalOpen(false)
         fetchNodes()
       } catch (err) {
+        console.error("Toplu ekleme hatası:", err)
         toast.error("Toplu ekleme sırasında hata oluştu.")
       } finally {
         setActionLoading(false)
@@ -108,12 +120,14 @@ export function TaxonomyStudio() {
     if (!newNodeName.trim()) return
     setActionLoading(true)
     try {
+      console.log("Tekli ekleme çağrılıyor:", newNodeName)
       await addNode(newNodeName, currentLevel, currentParentId)
       toast.success(`${newNodeName} başarıyla eklendi.`)
       setNewNodeName("")
       setIsAddModalOpen(false)
       fetchNodes()
     } catch (err) {
+      console.error("Ekleme hatası:", err)
       toast.error("Ekleme sırasında bir hata oluştu.")
     } finally {
       setActionLoading(false)
@@ -214,6 +228,7 @@ export function TaxonomyStudio() {
             <DialogContent className="bg-[#0a0a0a] border border-white/20 text-white rounded-[2rem]">
                <DialogHeader>
                   <DialogTitle className="text-2xl font-black italic uppercase tracking-tighter italic">YENİ {LEVEL_LABELS[currentLevel]}</DialogTitle>
+                  <DialogDescription className="text-[10px] text-white/20 uppercase tracking-widest">Hiyerarşiye yeni öğeler ekleyin.</DialogDescription>
                </DialogHeader>
                <div className="py-6 space-y-6">
                   <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
