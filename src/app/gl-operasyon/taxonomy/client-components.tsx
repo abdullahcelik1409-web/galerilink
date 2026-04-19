@@ -25,8 +25,11 @@ import {
   DialogFooter
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { getNodes, addNode, updateNode, deleteNode } from "./actions"
+import { getNodes, addNode, updateNode, deleteNode, bulkAddNodes } from "./actions"
 import { toast } from "sonner"
 
 const LEVELS = [
@@ -57,6 +60,8 @@ export function TaxonomyStudio() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [selectedNode, setSelectedNode] = useState<any>(null)
   const [newNodeName, setNewNodeName] = useState("")
+  const [isBulkMode, setIsBulkMode] = useState(false)
+  const [bulkData, setBulkData] = useState("")
   const [actionLoading, setActionLoading] = useState(false)
 
   const currentLevelIndex = path.length
@@ -81,6 +86,25 @@ export function TaxonomyStudio() {
   }
 
   async function handleAddNode() {
+    if (isBulkMode) {
+      const names = bulkData.split('\n').map(n => n.trim()).filter(n => n.length > 0)
+      if (names.length === 0) return
+      
+      setActionLoading(true)
+      try {
+        const result = await bulkAddNodes(names, currentLevel, currentParentId)
+        toast.success(`${names.length} öğe işlendi (Yeni eklenen veya zaten var olan).`)
+        setBulkData("")
+        setIsAddModalOpen(false)
+        fetchNodes()
+      } catch (err) {
+        toast.error("Toplu ekleme sırasında hata oluştu.")
+      } finally {
+        setActionLoading(false)
+      }
+      return
+    }
+
     if (!newNodeName.trim()) return
     setActionLoading(true)
     try {
@@ -191,15 +215,34 @@ export function TaxonomyStudio() {
                <DialogHeader>
                   <DialogTitle className="text-2xl font-black italic uppercase tracking-tighter italic">YENİ {LEVEL_LABELS[currentLevel]}</DialogTitle>
                </DialogHeader>
-               <div className="py-6 space-y-4">
+               <div className="py-6 space-y-6">
+                  <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
+                     <div className="space-y-0.5">
+                        <Label className="text-sm font-black italic uppercase tracking-tighter">TOPLU EKLEME MODU</Label>
+                        <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Alt alta yapıştırarak toplu işlem yapın</p>
+                     </div>
+                     <Switch checked={isBulkMode} onCheckedChange={setIsBulkMode} />
+                  </div>
+
                   <div className="space-y-2">
-                     <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">İsim / Tanım</label>
-                     <Input 
-                       value={newNodeName}
-                       onChange={(e) => setNewNodeName(e.target.value)}
-                       placeholder={`Örn: ${currentLevel === 'yil' ? '2024' : currentLevel === 'marka' ? 'BMW' : 'Yeni Kayıt'}`}
-                       className="h-14 bg-white/5 border-white/10 rounded-2xl text-lg font-bold"
-                     />
+                     <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">
+                       {isBulkMode ? "İsim Listesi (Satır Satır)" : "İsim / Tanım"}
+                     </label>
+                     {isBulkMode ? (
+                        <Textarea 
+                          value={bulkData}
+                          onChange={(e) => setBulkData(e.target.value)}
+                          placeholder={`Örn:\nGolf\nPassat\nPolo`}
+                          className="min-h-[200px] bg-white/5 border-white/10 rounded-2xl text-lg font-bold placeholder:italic"
+                        />
+                     ) : (
+                        <Input 
+                          value={newNodeName}
+                          onChange={(e) => setNewNodeName(e.target.value)}
+                          placeholder={`Örn: ${currentLevel === 'yil' ? '2024' : currentLevel === 'marka' ? 'BMW' : 'Yeni Kayıt'}`}
+                          className="h-14 bg-white/5 border-white/10 rounded-2xl text-lg font-bold"
+                        />
+                     )}
                   </div>
                   <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.2em] leading-relaxed">
                     * {path.length > 0 ? `${path[path.length-1].name} altına otomatik olarak eklenecektir.` : "Root seviyesine eklenecektir."}

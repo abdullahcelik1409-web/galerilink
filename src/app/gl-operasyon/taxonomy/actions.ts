@@ -101,3 +101,28 @@ export async function deleteNode(id: string) {
   revalidateTag('taxonomy', 'default')
   return { success: true }
 }
+export async function bulkAddNodes(names: string[], level: string, parentId: string | null) {
+  await checkAdminAuth()
+  const adminClient = createAdminClient()
+
+  const nodes = names.map(name => ({
+    name,
+    level,
+    parent_id: parentId,
+    slug: toSlug(`${name}-${level}-${parentId ? parentId.substring(0, 4) : 'root'}`),
+    status: 'approved'
+  }))
+
+  const { data, error } = await adminClient
+    .from('car_taxonomy')
+    .upsert(nodes, { 
+      onConflict: 'parent_id, name',
+      ignoreDuplicates: true 
+    })
+    .select()
+
+  if (error) throw error
+
+  revalidateTag('taxonomy', 'default')
+  return data
+}
