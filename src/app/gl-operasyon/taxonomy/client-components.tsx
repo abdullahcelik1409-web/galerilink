@@ -258,7 +258,7 @@ export function TaxonomyStudio() {
                   </Button>
                   <Button 
                     onClick={handleAddNode}
-                    disabled={actionLoading || !newNodeName}
+                    disabled={actionLoading || (isBulkMode ? !bulkData.trim() : !newNodeName.trim())}
                     className="h-14 px-8 rounded-2xl bg-white text-black font-black uppercase tracking-widest"
                   >
                     {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "KAYDET"}
