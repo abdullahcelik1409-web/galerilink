@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client'
 
-interface TaxonomyNode {
+export interface TaxonomyNode {
   id: string
   parent_id: string | null
   name: string
@@ -11,70 +11,66 @@ interface TaxonomyNode {
   logo_url?: string
 }
 
-// ⚡ Perf: Singleton taxonomy cache — fetched once, reused across navigations
-let taxonomyCache: Map<string, TaxonomyNode> | null = null
-let cacheTimestamp = 0
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
-let pendingFetch: Promise<Map<string, TaxonomyNode>> | null = null
+// ⚡ Dynamic level-based cache to replace the global map
+const levelCache: Record<string, { data: TaxonomyNode[], timestamp: number }> = {}
 
-export async function getTaxonomyMap(): Promise<Map<string, TaxonomyNode>> {
+/**
+ * Fetches children for a specific level and parent.
+ * This is 1000x more efficient than fetching the entire 53k record database at once.
+ */
+export async function getTaxonomyChildren(level: string, parentId: string | null): Promise<TaxonomyNode[]> {
+  const cacheKey = `${level}-${parentId}`
   const now = Date.now()
 
-  // Return cached version if still fresh
-  if (taxonomyCache && (now - cacheTimestamp) < CACHE_TTL) {
-    return taxonomyCache
+  // Return cached result if still fresh
+  if (levelCache[cacheKey] && (now - levelCache[cacheKey].timestamp) < CACHE_TTL) {
+    return levelCache[cacheKey].data
   }
 
-  // Deduplicate concurrent requests — if a fetch is already in progress, wait for it
-  if (pendingFetch) {
-    return pendingFetch
-  }
+  try {
+    const supabase = createClient()
+    let query = supabase
+      .from('car_taxonomy')
+      .select('id, parent_id, name, level, slug, logo_url')
+      .eq('level', level)
+      .eq('status', 'approved')
 
-  pendingFetch = (async () => {
-    try {
-      const supabase = createClient()
-      const map = new Map<string, TaxonomyNode>()
-      let hasMore = true
-      let offset = 0
-      const limit = 1000
-
-      while (hasMore) {
-        const { data, error } = await supabase
-          .from('car_taxonomy')
-          .select('id, parent_id, name, level, slug, logo_url')
-          .eq('status', 'approved')
-          .range(offset, offset + limit - 1)
-
-        if (error) {
-          console.error('Taxonomy cache fetch error:', error)
-          return taxonomyCache || new Map()
-        }
-
-        if (data) {
-          data.forEach((node: any) => map.set(node.id, node))
-          if (data.length < limit) {
-            hasMore = false
-          } else {
-            offset += limit
-          }
-        } else {
-          hasMore = false
-        }
-      }
-
-      taxonomyCache = map
-      cacheTimestamp = Date.now()
-      return map
-    } finally {
-      pendingFetch = null
+    if (parentId === null) {
+      query = query.is('parent_id', null)
+    } else {
+      query = query.eq('parent_id', parentId)
     }
-  })()
 
-  return pendingFetch
+    const { data, error } = await query.order('name', { ascending: level !== 'yil' })
+
+    if (error) {
+      console.error(`Error fetching taxonomy children for ${level}:`, error)
+      return []
+    }
+
+    const result = data as TaxonomyNode[]
+    levelCache[cacheKey] = { data: result, timestamp: now }
+    return result
+  } catch (err) {
+    console.error(`Exception in getTaxonomyChildren for ${level}:`, err)
+    return []
+  }
+}
+
+/**
+ * @deprecated Use getTaxonomyChildren for on-demand loading. 
+ * Fetching the entire 53k database into a Map is no longer supported.
+ */
+export async function getTaxonomyMap(): Promise<Map<string, TaxonomyNode>> {
+  console.warn('getTaxonomyMap is deprecated and returns an empty map. Use getTaxonomyChildren.')
+  return new Map()
 }
 
 export function invalidateTaxonomyCache() {
-  taxonomyCache = null
-  cacheTimestamp = 0
+  // Clear all level caches
+  for (const key in levelCache) {
+    delete levelCache[key]
+  }
 }

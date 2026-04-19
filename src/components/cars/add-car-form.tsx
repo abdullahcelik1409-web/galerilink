@@ -490,8 +490,8 @@ export function AddCarForm({ profile, currentListingCount }: { profile: any; cur
         console.log("Manuel taksonomi oluşturuluyor...");
         let currentParentId = manualPath[manualPath.length - 1]?.id || null;
         
-        // Kategori -> Marka -> Model -> Seri -> Motor -> Şanzıman -> Kasa -> Paket
-        const levelsToFill = ['kategori', 'marka', 'model', 'seri', 'motor', 'sanziman', 'kasa', 'paket'];
+        // Kategori -> Yıl -> Marka -> Model -> Yakıt -> Kasa -> Şanzıman -> Motor -> Paket
+        const levelsToFill = ['kategori', 'yil', 'marka', 'seri', 'yakit', 'kasa', 'sanziman', 'motor', 'paket'];
         const startIndex = levelsToFill.indexOf(manualLevel || 'kategori');
         
         for (let i = startIndex; i < levelsToFill.length; i++) {
@@ -499,13 +499,15 @@ export function AddCarForm({ profile, currentListingCount }: { profile: any; cur
           let entryName = "";
           
           if (levelName === 'kategori') entryName = data.manual_data.kategori_name || "Otomobil";
+          else if (levelName === 'yil') entryName = data.year || "";
           else if (levelName === 'marka') entryName = data.manual_data.marka || data.brand || "";
-          else if (levelName === 'model') entryName = data.manual_data.model || data.model || "";
-          else if (levelName === 'seri') entryName = data.manual_data.seri || "";
-          else if (levelName === 'motor') entryName = data.manual_data.motor || "";
+          else if (levelName === 'seri') entryName = data.manual_data.model || data.model || "";
+          else if (levelName === 'yakit') entryName = ""; // Add specifically if needed
           else if (levelName === 'sanziman') entryName = data.manual_data.sanziman || "";
           else if (levelName === 'kasa') entryName = data.manual_data.kasa || "";
+          else if (levelName === 'motor') entryName = data.manual_data.motor || "";
           else if (levelName === 'paket') entryName = data.manual_data.paket || "";
+
 
           if (!entryName) continue;
 
@@ -810,10 +812,14 @@ export function AddCarForm({ profile, currentListingCount }: { profile: any; cur
                             setIsManualMode(true)
                             setManualLevel(level)
                             setManualPath(path)
+                            const year = path.find(p => p.level === 'yil')?.name
                             const brand = path.find(p => p.level === 'marka')?.name
-                            const model = path.find(p => p.level === 'model')?.name
+                            const model = path.find(p => p.level === 'seri')?.name
                             const kategori = path.find(p => p.level === 'kategori')
                             
+                            if (year) {
+                              setValue('year', year)
+                            }
                             if (brand) {
                               setValue('brand', brand)
                               setValue('manual_data.marka', brand)
@@ -829,15 +835,17 @@ export function AddCarForm({ profile, currentListingCount }: { profile: any; cur
                           }}
                           onSelect={(item, path) => {
                             field.onChange(item.id)
+                            const yearItem = path.find(p => p.level === 'yil')
                             const brandItem = path.find(p => p.level === 'marka')
-                            const modelItem = path.find(p => p.level === 'model')
+                            const modelItem = path.find(p => p.level === 'seri')
                             
+                            if (yearItem) setValue('year', yearItem.name)
                             if (brandItem) setValue('brand', brandItem.name)
                             if (modelItem) setValue('model', modelItem.name)
                             
                             const currentTitle = control._formValues.title
                             if (!currentTitle || currentTitle === "") {
-                              const technicalPath = path.slice(3).map(p => p.name).join(' ')
+                              const technicalPath = path.slice(4).map(p => p.name).join(' ')
                               if (technicalPath) {
                                 setValue('title', `${brandItem?.name} ${modelItem?.name} ${technicalPath}`)
                               }

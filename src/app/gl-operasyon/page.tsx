@@ -14,7 +14,8 @@ import {
   FileText,
   Zap,
   Store,
-  MapPin
+  MapPin,
+  Database
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -84,11 +85,19 @@ export default async function AdminPage() {
               <p className="text-[9px] font-bold text-white/70 uppercase tracking-[0.4em] mt-1">Noir Yönetici Denetimi</p>
             </div>
           </div>
-          <Link href="/dashboard">
-            <Button variant="outline" className="h-12 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white/10 border-white/30 hover:bg-white hover:text-black px-6 transition-all text-white">
-              Sisteme Dön
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/gl-operasyon/taxonomy">
+              <Button variant="outline" className="h-12 rounded-xl text-[10px] font-black uppercase tracking-widest bg-primary/10 border-primary/20 hover:bg-primary hover:text-white px-6 transition-all text-primary gap-2">
+                <Database className="w-4 h-4" />
+                TAXONOMY STUDIO
+              </Button>
+            </Link>
+            <Link href="/dashboard">
+              <Button variant="outline" className="h-12 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white/10 border-white/30 hover:bg-white hover:text-black px-6 transition-all text-white">
+                Sisteme Dön
+              </Button>
+            </Link>
+          </div>
         </header>
 
         {/* İstatistikler */}

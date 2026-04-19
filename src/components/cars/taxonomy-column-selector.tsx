@@ -22,19 +22,21 @@ interface TaxonomyColumnSelectorProps {
 }
 
 const LEVELS = [
-  'kategori', 'marka', 'model', 'seri', 'motor', 'sanziman', 'kasa', 'paket'
+  'kategori', 'yil', 'marka', 'seri', 'yakit', 'kasa', 'sanziman', 'motor', 'paket'
 ]
 
 const LEVEL_LABELS: Record<string, string> = {
   kategori: 'Kategori',
+  yil: 'Üretim Yılı',
   marka: 'Marka',
-  model: 'Model',
-  seri: 'Seri',
-  motor: 'Motor Tipi',
-  sanziman: 'Şanzıman',
+  seri: 'Model',
+  yakit: 'Yakıt Tipi',
   kasa: 'Kasa Tipi',
-  paket: 'Paket'
+  sanziman: 'Şanzıman',
+  motor: 'Motor',
+  paket: 'Paket / Donanım'
 }
+
 
 export function TaxonomyColumnSelector({ onSelect, onManualMode, onStepChange, initialPath = [] }: TaxonomyColumnSelectorProps) {
   const [path, setPath] = useState<TaxonomyItem[]>(initialPath)
@@ -72,8 +74,6 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, onStepChange, i
     }
   }, [mobileActiveIndex, onStepChange])
 
-  // ⚡ Perf: Use the shared memory cache for instant 0ms column loading!
-
   async function loadColumn(level: string, parentId: string | null, index: number) {
     const nextLevelIndex = index
     
@@ -82,24 +82,19 @@ export function TaxonomyColumnSelector({ onSelect, onManualMode, onStepChange, i
     setColumns(prev => [...prev, { level, items: [], loading: true }])
 
     try {
-      // ⚡ This resolves instantly if already cached
-      const taxonomyMap = await getTaxonomyMap()
-      
-      const allItems = Array.from(taxonomyMap.values())
-      const filteredItems = allItems.filter(item => 
-        item.level === level && 
-        (parentId === null ? item.parent_id === null : item.parent_id === parentId)
-      ).sort((a, b) => a.name.localeCompare(b.name, 'tr-TR')) // Locale-aware Turkish sort
+      // ⚡ New: Fetch ONLY the required level/parent from the server
+      const { getTaxonomyChildren } = await import("@/lib/taxonomy-cache")
+      const items = await getTaxonomyChildren(level, parentId)
 
       setColumns(prev => {
         const updated = [...prev]
         if (updated[nextLevelIndex]) {
-          updated[nextLevelIndex] = { level, items: filteredItems as TaxonomyItem[], loading: false }
+          updated[nextLevelIndex] = { level, items: items as TaxonomyItem[], loading: false }
         }
         return updated
       })
     } catch (error) {
-      console.error('Failed to load taxonomy from cache:', error)
+      console.error('Failed to load taxonomy:', error)
       setColumns(prev => {
         const updated = [...prev]
         if (updated[nextLevelIndex]) updated[nextLevelIndex].loading = false
