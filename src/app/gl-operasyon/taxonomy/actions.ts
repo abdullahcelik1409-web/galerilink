@@ -83,7 +83,7 @@ export async function updateNode(id: string, name: string) {
 
   if (error) throw error
 
-  revalidateTag('taxonomy')
+  revalidateTag('taxonomy', 'default')
   return data
 }
 
@@ -98,6 +98,6 @@ export async function deleteNode(id: string) {
 
   if (error) throw error
 
-  revalidateTag('taxonomy')
+  revalidateTag('taxonomy', 'default')
   return { success: true }
 }
