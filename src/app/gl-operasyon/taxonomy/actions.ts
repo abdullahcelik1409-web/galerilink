@@ -66,7 +66,7 @@ export async function addNode(name: string, level: string, parentId: string | nu
 
   if (error) throw error
 
-  revalidateTag('taxonomy')
+  revalidateTag('taxonomy', 'default')
   return data
 }
 
