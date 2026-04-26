@@ -19,11 +19,18 @@ export const metadata = {
 export default async function TaxonomyPage() {
   const { user } = await getAuthUser()
   
-  // 🛡️ Yetki Kontrolü
+  // 1. Yetki Kontrolü
   const adminEmailsVar = process.env.ADMIN_EMAILS || 'abdullah.celik1409@gmail.com'
-  const authorizedEmails = adminEmailsVar.split(',').map(e => e.trim().toLowerCase())
+  const cleanAdminEmails = adminEmailsVar.replace(/['"]+/g, '')
+  const authorizedEmails = cleanAdminEmails.split(',').map(e => e.trim().toLowerCase())
   
-  if (!user || !authorizedEmails.includes(user.email?.toLowerCase() || "")) {
+  if (!authorizedEmails.includes('abdullah.celik1409@gmail.com')) {
+    authorizedEmails.push('abdullah.celik1409@gmail.com')
+  }
+
+  const userEmail = user?.email?.toLowerCase() || ""
+  
+  if (!user || !authorizedEmails.includes(userEmail)) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-6 text-white selection:bg-indigo-500/30">
         <div className="relative z-10 w-full max-w-lg">

@@ -33,9 +33,19 @@ export default async function AdminPage() {
   
   // 1. Yetki Kontrolü
   const adminEmailsVar = process.env.ADMIN_EMAILS || 'abdullah.celik1409@gmail.com'
-  const authorizedEmails = adminEmailsVar.split(',').map(e => e.trim().toLowerCase())
+  // Tırnak işaretlerini ve boşlukları temizle, virgülle ayır
+  const cleanAdminEmails = adminEmailsVar.replace(/['"]+/g, '')
+  const authorizedEmails = cleanAdminEmails.split(',').map(e => e.trim().toLowerCase())
   
-  if (!user || !authorizedEmails.includes(user.email?.toLowerCase() || "")) {
+  // Ana admin her zaman yetkili olmalı
+  if (!authorizedEmails.includes('abdullah.celik1409@gmail.com')) {
+    authorizedEmails.push('abdullah.celik1409@gmail.com')
+  }
+  
+  const userEmail = user.email?.toLowerCase() || ""
+  const isAuthorized = authorizedEmails.includes(userEmail)
+  
+  if (!user || !isAuthorized) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-6 selection:bg-indigo-500/30">
         <div className="relative z-10 w-full max-w-lg">

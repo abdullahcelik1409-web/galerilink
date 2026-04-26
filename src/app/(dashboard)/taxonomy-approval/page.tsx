@@ -15,7 +15,13 @@ export default async function TaxonomyApprovalPage() {
   }
 
   // Güvenlik: Sadece environment variables içinde kayıtlı ADMIN e-postaları buraya girebilir
-  const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) || []
+  const adminEmailsVar = process.env.ADMIN_EMAILS || 'abdullah.celik1409@gmail.com'
+  const cleanAdminEmails = adminEmailsVar.replace(/['"]+/g, '')
+  const adminEmails = cleanAdminEmails.split(',').map(e => e.trim().toLowerCase())
+  
+  if (!adminEmails.includes('abdullah.celik1409@gmail.com')) {
+    adminEmails.push('abdullah.celik1409@gmail.com')
+  }
   
   if (!adminEmails.includes(user.email?.toLowerCase() || "")) {
     return (
