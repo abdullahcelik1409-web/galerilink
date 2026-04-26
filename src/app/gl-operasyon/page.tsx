@@ -42,7 +42,7 @@ export default async function AdminPage() {
     authorizedEmails.push('abdullah.celik1409@gmail.com')
   }
   
-  const userEmail = user.email?.toLowerCase() || ""
+  const userEmail = user?.email?.toLowerCase() || ""
   const isAuthorized = authorizedEmails.includes(userEmail)
   
   if (!user || !isAuthorized) {
