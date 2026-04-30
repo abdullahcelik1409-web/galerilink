@@ -160,8 +160,8 @@ export function TaxonomyStudio() {
       setIsDeleteModalOpen(false)
       setSelectedNode(null)
       fetchNodes()
-    } catch (err) {
-      toast.error("Silme hatası. Bağlantılı veriler olabilir.")
+    } catch (err: any) {
+      toast.error(err?.message || "Silme hatası. Bağlantılı veriler olabilir.")
     } finally {
       setActionLoading(false)
     }

@@ -66,7 +66,7 @@ export async function addNode(name: string, level: string, parentId: string | nu
 
   if (error) throw error
 
-  revalidateTag('taxonomy', 'default')
+  revalidateTag('taxonomy')
   return data
 }
 
@@ -83,7 +83,7 @@ export async function updateNode(id: string, name: string) {
 
   if (error) throw error
 
-  revalidateTag('taxonomy', 'default')
+  revalidateTag('taxonomy')
   return data
 }
 
@@ -91,6 +91,37 @@ export async function deleteNode(id: string) {
   await checkAdminAuth()
   const adminClient = createAdminClient()
 
+  // 1. Recursively collect all descendant IDs (including the node itself)
+  async function collectDescendantIds(nodeId: string): Promise<string[]> {
+    const { data: children } = await adminClient
+      .from('car_taxonomy')
+      .select('id')
+      .eq('parent_id', nodeId)
+
+    let ids = [nodeId]
+    if (children && children.length > 0) {
+      for (const child of children) {
+        const childIds = await collectDescendantIds(child.id)
+        ids = [...ids, ...childIds]
+      }
+    }
+    return ids
+  }
+
+  const allIds = await collectDescendantIds(id)
+
+  // 2. Nullify package_id references in cars table for all affected taxonomy nodes
+  const { error: unlinkError } = await adminClient
+    .from('cars')
+    .update({ package_id: null })
+    .in('package_id', allIds)
+
+  if (unlinkError) {
+    console.error('Cars unlink error:', unlinkError)
+    throw new Error(`Bağlantılı araç kayıtları güncellenemedi: ${unlinkError.message}`)
+  }
+
+  // 3. Delete the node (children cascade via DB FK constraint)
   const { error } = await adminClient
     .from('car_taxonomy')
     .delete()
@@ -98,7 +129,7 @@ export async function deleteNode(id: string) {
 
   if (error) throw error
 
-  revalidateTag('taxonomy', 'default')
+  revalidateTag('taxonomy')
   return { success: true }
 }
 export async function bulkAddNodes(names: string[], level: string, parentId: string | null) {
