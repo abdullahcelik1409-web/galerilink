@@ -29,8 +29,16 @@ export default async function DashboardLayout({
     // Note: 'beklemede' users are no longer redirected to /waiting-approval.
     // They are allowed to see the dashboard but with blurred content.
     
+    // Admin kullanıcılar ödeme duvarını bypass eder
+    const adminEmailsVar = process.env.ADMIN_EMAILS || 'abdullah.celik1409@gmail.com'
+    const adminEmails = adminEmailsVar.replace(/['"]+/g, '').split(',').map(e => e.trim().toLowerCase())
+    if (!adminEmails.includes('abdullah.celik1409@gmail.com')) {
+      adminEmails.push('abdullah.celik1409@gmail.com')
+    }
+    const isAdmin = adminEmails.includes(user.email?.toLowerCase() || '')
+
     const trialEndsAt = profile.trial_ends_at ? new Date(profile.trial_ends_at) : null
-    if (profile.subscription_status === 'expired' || (trialEndsAt && trialEndsAt < new Date())) {
+    if (!isAdmin && (profile.subscription_status === 'expired' || (trialEndsAt && trialEndsAt < new Date()))) {
       redirect('/subscription')
     }
   }
