@@ -66,7 +66,7 @@ export async function addNode(name: string, level: string, parentId: string | nu
 
   if (error) throw error
 
-  revalidateTag('taxonomy')
+  revalidateTag('taxonomy', 'default')
   return data
 }
 
@@ -83,7 +83,7 @@ export async function updateNode(id: string, name: string) {
 
   if (error) throw error
 
-  revalidateTag('taxonomy')
+  revalidateTag('taxonomy', 'default')
   return data
 }
 
@@ -129,7 +129,7 @@ export async function deleteNode(id: string) {
 
   if (error) throw error
 
-  revalidateTag('taxonomy')
+  revalidateTag('taxonomy', 'default')
   return { success: true }
 }
 export async function bulkAddNodes(names: string[], level: string, parentId: string | null) {
