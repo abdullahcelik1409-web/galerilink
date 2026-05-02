@@ -22,19 +22,20 @@ interface TaxonomyColumnSelectorProps {
 }
 
 const LEVELS = [
-  'kategori', 'yil', 'marka', 'seri', 'yakit', 'kasa', 'sanziman', 'motor', 'paket'
+  'kategori', 'yil', 'marka', 'seri', 'yakit', 'kasa', 'sanziman', 'model', 'motor', 'paket'
 ]
 
 const LEVEL_LABELS: Record<string, string> = {
   kategori: 'Kategori',
   yil: 'Üretim Yılı',
   marka: 'Marka',
-  seri: 'Model',
+  seri: 'Seri',
   yakit: 'Yakıt Tipi',
   kasa: 'Kasa Tipi',
   sanziman: 'Şanzıman',
+  model: 'Model',
   motor: 'Motor',
-  paket: 'Paket / Donanım'
+  paket: 'Paket'
 }
 
 

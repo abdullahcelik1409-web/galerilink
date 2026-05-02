@@ -38,6 +38,7 @@ const carSchema = z.object({
   title: z.string().min(5, "Başlık en az 5 karakter olmalıdır."),
   brand: z.string().optional(),
   model: z.string().optional(),
+  series: z.string().optional(),
   year: z.string().min(4, "Geçerli bir yıl giriniz."),
   km: z.string().min(1, "Kilometre giriniz."),
   price_b2b: z.string().min(1, "Fiyat giriniz."),
@@ -491,7 +492,7 @@ export function AddCarForm({ profile, currentListingCount }: { profile: any; cur
         let currentParentId = manualPath[manualPath.length - 1]?.id || null;
         
         // Kategori -> Yıl -> Marka -> Model -> Yakıt -> Kasa -> Şanzıman -> Motor -> Paket
-        const levelsToFill = ['kategori', 'yil', 'marka', 'seri', 'yakit', 'kasa', 'sanziman', 'motor', 'paket'];
+        const levelsToFill = ['kategori', 'yil', 'marka', 'seri', 'yakit', 'kasa', 'sanziman', 'model', 'motor', 'paket'];
         const startIndex = levelsToFill.indexOf(manualLevel || 'kategori');
         
         for (let i = startIndex; i < levelsToFill.length; i++) {
@@ -500,8 +501,8 @@ export function AddCarForm({ profile, currentListingCount }: { profile: any; cur
           
           if (levelName === 'kategori') entryName = data.manual_data.kategori_name || "Otomobil";
           else if (levelName === 'yil') entryName = data.year || "";
-          else if (levelName === 'marka') entryName = data.manual_data.marka || data.brand || "";
-          else if (levelName === 'seri') entryName = data.manual_data.model || data.model || "";
+          else if (levelName === 'seri') entryName = data.manual_data.seri || "";
+          else if (levelName === 'model') entryName = data.manual_data.model || data.model || "";
           else if (levelName === 'yakit') entryName = ""; // Add specifically if needed
           else if (levelName === 'sanziman') entryName = data.manual_data.sanziman || "";
           else if (levelName === 'kasa') entryName = data.manual_data.kasa || "";
@@ -550,6 +551,7 @@ export function AddCarForm({ profile, currentListingCount }: { profile: any; cur
         title: data.title || `${data.brand} ${data.model}`,
         brand: data.manual_data?.marka || data.brand,
         model: data.manual_data?.model || data.model,
+        series: data.manual_data?.seri || data.series,
         year: parseInt(data.year),
         km: parseInt(data.km),
         damage_report: data.damage_report,
@@ -814,7 +816,8 @@ export function AddCarForm({ profile, currentListingCount }: { profile: any; cur
                             setManualPath(path)
                             const year = path.find(p => p.level === 'yil')?.name
                             const brand = path.find(p => p.level === 'marka')?.name
-                            const model = path.find(p => p.level === 'seri')?.name
+                            const series = path.find(p => p.level === 'seri')?.name
+                            const model = path.find(p => p.level === 'model')?.name
                             const kategori = path.find(p => p.level === 'kategori')
                             
                             if (year) {
@@ -823,6 +826,10 @@ export function AddCarForm({ profile, currentListingCount }: { profile: any; cur
                             if (brand) {
                               setValue('brand', brand)
                               setValue('manual_data.marka', brand)
+                            }
+                            if (series) {
+                              setValue('series', series)
+                              setValue('manual_data.seri', series)
                             }
                             if (model) {
                               setValue('model', model)
@@ -837,17 +844,20 @@ export function AddCarForm({ profile, currentListingCount }: { profile: any; cur
                             field.onChange(item.id)
                             const yearItem = path.find(p => p.level === 'yil')
                             const brandItem = path.find(p => p.level === 'marka')
-                            const modelItem = path.find(p => p.level === 'seri')
+                            const seriesItem = path.find(p => p.level === 'seri')
+                            const modelItem = path.find(p => p.level === 'model')
                             
                             if (yearItem) setValue('year', yearItem.name)
                             if (brandItem) setValue('brand', brandItem.name)
+                            if (seriesItem) setValue('series', seriesItem.name)
                             if (modelItem) setValue('model', modelItem.name)
+                            else if (seriesItem) setValue('model', seriesItem.name) // Fallback for old data
                             
                             const currentTitle = control._formValues.title
                             if (!currentTitle || currentTitle === "") {
                               const technicalPath = path.slice(4).map(p => p.name).join(' ')
                               if (technicalPath) {
-                                setValue('title', `${brandItem?.name} ${modelItem?.name} ${technicalPath}`)
+                                setValue('title', `${brandItem?.name} ${modelItem?.name || seriesItem?.name} ${technicalPath}`)
                               }
                             }
                           }} 

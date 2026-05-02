@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config({ path: '.env.local' });
+// require('dotenv').config({ path: '.env.local' });
 
 // Service Role Key from check_schema.js
 const SUPABASE_URL = 'https://xqivvgnzrikwcavcxjsi.supabase.co';
