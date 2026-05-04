@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
+import { revalidateTag } from 'next/cache'
 
 export async function POST(request: Request) {
   try {
@@ -36,18 +37,20 @@ export async function POST(request: Request) {
 
       if (error) throw error
       
+      revalidateTag('taxonomy')
       return NextResponse.json({ success: true, message: 'Approved successfully' })
     }
 
     if (action === 'reject') {
       const { error } = await supabaseAdmin
         .from('car_taxonomy')
-        .delete()
+        .update({ status: 'rejected' })
         .eq('id', id)
 
       if (error) throw error
       
-      return NextResponse.json({ success: true, message: 'Deleted successfully' })
+      revalidateTag('taxonomy')
+      return NextResponse.json({ success: true, message: 'Rejected successfully (Hidden from UI)' })
     }
 
   } catch (error: any) {

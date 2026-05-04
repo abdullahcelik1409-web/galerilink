@@ -65,7 +65,7 @@ export default function TaxonomyApprovalClient() {
 
   const handleReject = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!confirm("Bu kaydı silmek istediğinize emin misiniz?")) return
+    if (!confirm("Bu taksonomi önerisini reddetmek istediğinize emin misiniz? Veri silinmeyecek, sadece bu listeden kaldırılacaktır. Mevcut ilanlar etkilenmez.")) return
     
     const originalItems = [...pendingItems]
     setPendingItems(prev => prev.filter(item => item.id !== id))
@@ -158,15 +158,15 @@ export default function TaxonomyApprovalClient() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={(e) => handleReject(item.id, e)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-colors"
+                          className="group flex items-center gap-1.5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all shadow-lg shadow-red-600/20 active:scale-95"
                         >
-                          <XCircle className="w-3.5 h-3.5" /> Sil
+                          <XCircle className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" /> REDDET
                         </button>
                         <button
                           onClick={(e) => handleApprove(item.id, e)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg transition-colors"
+                          className="group flex items-center gap-1.5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-lg shadow-emerald-600/20 active:scale-95"
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Onayla
+                          <CheckCircle2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" /> ONAYLA
                         </button>
                       </div>
                     </td>

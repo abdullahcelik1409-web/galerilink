@@ -334,14 +334,18 @@ export function TaxonomyStudio() {
                     <td className="px-8 py-6">
                       <code className="text-[10px] font-technical text-white/40 bg-white/5 px-2 py-1 rounded-md">{node.slug}</code>
                     </td>
-                    <td className="px-8 py-6">
-                       <Badge variant="outline" className={cn(
-                         "text-[8px] font-black uppercase border-white/20 text-white/70",
-                         node.status === 'approved' ? "border-emerald-500/30 text-emerald-500 bg-emerald-500/5" : "border-amber-500/30 text-amber-500 bg-amber-500/5"
-                       )}>
-                         {node.status === 'approved' ? 'AKTİF' : 'ONAY BEKLİYOR'}
-                       </Badge>
-                    </td>
+                     <td className="px-8 py-6">
+                        <Badge variant="outline" className={cn(
+                          "text-[8px] font-black uppercase border-white/20 text-white/70",
+                          node.status === 'approved' ? "border-emerald-500/30 text-emerald-500 bg-emerald-500/5" : 
+                          node.status === 'rejected' ? "border-red-500/30 text-red-500 bg-red-500/5" :
+                          "border-amber-500/30 text-amber-500 bg-amber-500/5"
+                        )}>
+                          {node.status === 'approved' ? 'AKTİF' : 
+                           node.status === 'rejected' ? 'REDDEDİLDİ' : 
+                           'ONAY BEKLİYOR'}
+                        </Badge>
+                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 duration-300">
                         <Button 
