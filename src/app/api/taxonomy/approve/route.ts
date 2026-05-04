@@ -36,8 +36,7 @@ export async function POST(request: Request) {
         .eq('id', id)
 
       if (error) throw error
-      
-      revalidateTag('taxonomy')
+      revalidateTag('taxonomy', 'default')
       return NextResponse.json({ success: true, message: 'Approved successfully' })
     }
 
@@ -48,8 +47,7 @@ export async function POST(request: Request) {
         .eq('id', id)
 
       if (error) throw error
-      
-      revalidateTag('taxonomy')
+      revalidateTag('taxonomy', 'default')
       return NextResponse.json({ success: true, message: 'Rejected successfully (Hidden from UI)' })
     }
 

@@ -158,15 +158,15 @@ export default function TaxonomyApprovalClient() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={(e) => handleReject(item.id, e)}
-                          className="group flex items-center gap-1.5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all shadow-lg shadow-red-600/20 active:scale-95"
+                          className="group flex items-center gap-1.5 px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.1em] text-white bg-[#e11d48] hover:bg-[#be123c] rounded-xl transition-all shadow-lg shadow-rose-600/30 border border-white/10 active:scale-95"
                         >
-                          <XCircle className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" /> REDDET
+                          <XCircle className="w-4 h-4 group-hover:rotate-90 transition-transform" /> REDDET
                         </button>
                         <button
                           onClick={(e) => handleApprove(item.id, e)}
-                          className="group flex items-center gap-1.5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-lg shadow-emerald-600/20 active:scale-95"
+                          className="group flex items-center gap-1.5 px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.1em] text-white bg-[#059669] hover:bg-[#047857] rounded-xl transition-all shadow-lg shadow-emerald-600/30 border border-white/10 active:scale-95"
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" /> ONAYLA
+                          <CheckCircle2 className="w-4 h-4 group-hover:scale-110 transition-transform" /> ONAYLA
                         </button>
                       </div>
                     </td>
