@@ -23,6 +23,23 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { AdminActionButtons } from "./admin-action-buttons"
 import { DocumentViewer } from "./document-viewer"
+import { ReactNode } from "react"
+
+type Profile = {
+  id: string;
+  ad_soyad?: string;
+  galeri_adi?: string;
+  vergi_levhasi_url?: string;
+  tax_plate_url?: string;
+  yetki_belge_no?: string;
+  tax_no?: string;
+  hesap_durumu: 'onaylandi' | 'beklemede' | 'reddedildi';
+  created_at: string;
+  phone?: string;
+  city?: string;
+  district?: string;
+  location_city?: string;
+}
 
 export const metadata = {
   title: "GL-Ops Terminal - Galerilink Admin",
@@ -67,7 +84,7 @@ export default async function AdminPage() {
   const adminClient = createAdminClient()
 
   // 2. Tüm Profilleri Çek (Moderasyon İçin)
-  const { data: profiles, error } = await adminClient
+  const { data: rawProfiles, error } = await adminClient
     .from('profiles')
     .select('*')
     .order('created_at', { ascending: false })
@@ -75,6 +92,18 @@ export default async function AdminPage() {
   if (error) {
     return <div className="p-20 text-center text-red-500 font-bold bg-black min-h-screen">Veritabanı Hatası: {error.message}</div>
   }
+
+  // 3. Bilgi/Belge Göndermemiş Kullanıcıları Filtrele
+  // Kullanıcı 'beklemede' ise mutlaka belge yüklemiş olmalı.
+  const profiles = rawProfiles?.filter(p => {
+    const hasDocuments = p.vergi_levhasi_url || p.tax_plate_url;
+    const isAnonymous = !p.ad_soyad && !p.galeri_adi;
+
+    if (p.hesap_durumu === 'beklemede') {
+      return hasDocuments && !isAnonymous;
+    }
+    return true;
+  }) || []
 
   const pendingUsers = profiles?.filter(p => p.hesap_durumu === 'beklemede') || []
 
@@ -188,7 +217,7 @@ export default async function AdminPage() {
   )
 }
 
-function MiniStat({ icon, label, value, active }: { icon: any, label: string, value: number, active?: boolean }) {
+function MiniStat({ icon, label, value, active }: { icon: ReactNode, label: string, value: number, active?: boolean }) {
   return (
     <div className={cn(
       "bg-[#080808] border rounded-2xl p-5 flex items-center justify-between group transition-all duration-500",
@@ -208,7 +237,7 @@ function MiniStat({ icon, label, value, active }: { icon: any, label: string, va
   )
 }
 
-function ApplicationRow({ profile, isPending }: { profile: any, isPending?: boolean }) {
+function ApplicationRow({ profile, isPending }: { profile: Profile, isPending?: boolean }) {
   const isAnonymous = !profile.ad_soyad && !profile.galeri_adi;
 
   // Vergi Levhası URL ve Yetki Belge No kontrolü (Farklı kolon isimleri ihtimaline karşı yedekli)
@@ -307,13 +336,13 @@ function ApplicationRow({ profile, isPending }: { profile: any, isPending?: bool
   )
 }
 
-function StatusRowBadge({ status }: { status: string }) {
-  const styles: any = {
-    onaylandi: "bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.2)]",
+function StatusRowBadge({ status }: { status: Profile['hesap_durumu'] }) {
+  const styles: Record<Profile['hesap_durumu'], string> = {
+    onaylandi: "bg-white text-black border-white shadow-[0_0_100px_-20px_rgba(255,255,255,0.1)]",
     beklemede: "bg-white/20 text-white border-white/40",
     reddedildi: "bg-red-950 text-red-100 border-red-500/40 line-through opacity-80"
   }
-  const label: any = {
+  const label: Record<Profile['hesap_durumu'], string> = {
     onaylandi: "ONAYLANDI",
     beklemede: "İNCELEMEDE",
     reddedildi: "REDDEDİLDİ"
